@@ -257,8 +257,8 @@ export function ConfirmationReceiptScreen({
             </p>
             <p className="font-medium text-[#0F1E36]">
               {receipt.paymentModality === 'contado'
-                ? 'Modalidad: Pago al Contado (1 cuota única)'
-                : 'Modalidad: Fraccionamiento en 4 Cuotas Académicas'}
+                ? 'Método de pago: tarjeta (en línea)'
+                : 'Método de pago: ventanilla (orden reservada 24 horas)'}
             </p>
             <p className="text-xs text-[#475569] tabular-nums">
               Derechos de matrícula: {formatCurrencyUSD(receipt.baseFee)} · Valor de

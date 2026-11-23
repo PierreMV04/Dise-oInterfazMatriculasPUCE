@@ -120,7 +120,7 @@ export function EnrollmentStatusScreen({
                 type="text"
                 value={lookupInput}
                 onChange={(e) => setLookupInput(e.target.value)}
-                placeholder="Ej. 202310482, 202420115 o MAT-2026-I-041892"
+                placeholder="Ej. L00412398 o MAT-2026-09823"
                 className="w-full pl-9 pr-3 py-2.5 bg-white border border-[#CBD5E1] rounded-lg text-sm font-mono text-[#0F1E36] focus:outline-none focus:border-[#1D4ED8]"
               />
             </div>

@@ -1,4 +1,4 @@
-﻿import { Database, Menu, Palette, X } from 'lucide-react';
+﻿import { Database, Menu, Palette, Route, X } from 'lucide-react';
 import { useState } from 'react';
 import { ScreenId } from '../types/enrollment';
 
@@ -77,6 +77,19 @@ export function TopNavBar({ currentScreen, onNavigate }: TopNavBarProps) {
 
         {/* Zone 3: 1 primary action + mobile menu */}
         <div className="flex items-center gap-3 shrink-0">
+          <button
+            type="button"
+            onClick={() => handleNavClick('navigation-map')}
+            className={`hidden xl:inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1D4ED8] ${
+              currentScreen === 'navigation-map'
+                ? 'bg-[#1D4ED8] text-white'
+                : 'bg-[#F1F5F9] text-[#0F1E36] hover:bg-[#E2E8F0]'
+            }`}
+          >
+            <Route className="w-3.5 h-3.5" />
+            <span>Mapa y reglas</span>
+          </button>
+
           <button
             type="button"
             onClick={() => handleNavClick('data-dictionary')}
@@ -167,6 +180,17 @@ export function TopNavBar({ currentScreen, onNavigate }: TopNavBarProps) {
             );
           })}
           <div className="pt-2 border-t border-[#E2E6ED]">
+            <button
+              type="button"
+              onClick={() => handleNavClick('navigation-map')}
+              className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-semibold cursor-pointer ${
+                currentScreen === 'navigation-map'
+                  ? 'bg-[#1D4ED8] text-white'
+                  : 'text-[#1D4ED8] hover:bg-[#EFF6FF]'
+              }`}
+            >
+              Mapa de navegación y reglas
+            </button>
             <button
               type="button"
               onClick={() => handleNavClick('data-dictionary')}

@@ -6,7 +6,8 @@
   | 'confirmation'
   | 'status'
   | 'design-system'
-  | 'data-dictionary';
+  | 'data-dictionary'
+  | 'navigation-map';
 
 export type DayOfWeek = 'Lun' | 'Mar' | 'Mié' | 'Jue' | 'Vie' | 'Sáb';
 

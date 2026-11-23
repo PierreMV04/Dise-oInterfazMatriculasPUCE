@@ -189,7 +189,7 @@ export function DesignSystemScreen({ onNavigate }: DesignSystemScreenProps) {
               </p>
             </div>
             <div className="md:col-span-8 flex flex-wrap items-center gap-4 font-mono text-sm text-[#0F1E36] tabular-nums">
-              <span>SIS-601</span>
+              <span>SIS601</span>
               <span>202310482</span>
               <span>12 / 22 créditos</span>
               <span>Lun 08:00–10:00</span>
@@ -309,7 +309,7 @@ export function DesignSystemScreen({ onNavigate }: DesignSystemScreenProps) {
               <AlertTriangle className="w-5 h-5 text-[#B45309] shrink-0 mt-0.5" />
               <div className="text-xs sm:text-sm">
                 <p className="font-semibold">
-                  Advertencia: Cupos limitados en SIS-604
+                  Advertencia: Cupos limitados en SIS601
                 </p>
                 <p className="opacity-90 mt-0.5">
                   Quedan solo 6 vacantes disponibles. Confirma tu matrícula pronto.
@@ -321,10 +321,10 @@ export function DesignSystemScreen({ onNavigate }: DesignSystemScreenProps) {
               <XCircle className="w-5 h-5 text-[#B91C1C] shrink-0 mt-0.5" />
               <div className="text-xs sm:text-sm">
                 <p className="font-semibold">
-                  Error: Cruce horario detectado con IND-503
+                  Error: Cruce horario detectado con SIS603
                 </p>
                 <p className="opacity-90 mt-0.5">
-                  El horario Lun 09:00–11:00 se superpone con SIS-601 (08:00–10:00).
+                  El horario Vie 09:00–10:00 se superpone con SIS603 (07:00–10:00).
                 </p>
               </div>
             </div>

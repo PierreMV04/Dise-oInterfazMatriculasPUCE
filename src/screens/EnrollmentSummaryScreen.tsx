@@ -21,6 +21,7 @@ interface EnrollmentSummaryScreenProps {
   student: StudentProfile;
   selectedCourses: Course[];
   onConfirmEnrollment: (paymentModality: PaymentModality) => void;
+  onCancelEnrollment: () => void;
   onNavigate: (screen: ScreenId) => void;
 }
 
@@ -28,6 +29,7 @@ export function EnrollmentSummaryScreen({
   student,
   selectedCourses,
   onConfirmEnrollment,
+  onCancelEnrollment,
   onNavigate,
 }: EnrollmentSummaryScreenProps) {
   const [paymentModality, setPaymentModality] =
@@ -37,7 +39,20 @@ export function EnrollmentSummaryScreen({
 
   const validation = validateEnrollmentSelection(selectedCourses, student);
   const fees = calculateEnrollmentFees(selectedCourses);
-  const installmentAmount = fees.totalAmount / 4;
+  const remainingCredits = student.maxCredits - validation.totalCredits;
+  const warningList = [
+    ...validation.warnings,
+    ...(remainingCredits > 0
+      ? [`Te quedan ${remainingCredits} créditos disponibles de ${student.maxCredits}.`]
+      : []),
+    'Los cupos se revalidan al presionar Confirmar matrícula.',
+  ];
+
+  const handleCancel = () => {
+    if (window.confirm('¿Cancelar la matrícula? Se descartará tu selección de asignaturas.')) {
+      onCancelEnrollment();
+    }
+  };
 
   const handleConfirm = () => {
     if (!validation.isValid) {
@@ -90,6 +105,30 @@ export function EnrollmentSummaryScreen({
         />
       )}
 
+      {selectedCourses.length > 0 && !validation.isValid && (
+        <SystemMessageBanner
+          message={{
+            id: 'summary-errors',
+            type: 'error',
+            title: 'Hay observaciones que impiden confirmar',
+            description: 'Corrige tu selección para poder confirmar la matrícula:',
+            details: validation.errors,
+          }}
+        />
+      )}
+
+      {selectedCourses.length > 0 && (
+        <SystemMessageBanner
+          message={{
+            id: 'summary-warnings',
+            type: 'warning',
+            title: 'Advertencias',
+            description: 'Revisa estos puntos antes de confirmar:',
+            details: warningList,
+          }}
+        />
+      )}
+
       {selectedCourses.length === 0 ? (
         <section className="bg-white border border-[#E2E6ED] rounded-xl p-8 text-center space-y-4">
           <h2 className="text-lg font-bold text-[#0F1E36]">
@@ -133,8 +172,11 @@ export function EnrollmentSummaryScreen({
                       <th className="py-3 pl-5 pr-3 font-semibold">Código</th>
                       <th className="py-3 px-3 font-semibold">Asignatura y docente</th>
                       <th className="py-3 px-3 font-semibold">Horario y aula</th>
-                      <th className="py-3 pl-3 pr-5 text-right font-semibold">
+                      <th className="py-3 px-3 text-right font-semibold">
                         Créditos
+                      </th>
+                      <th className="py-3 pl-3 pr-5 text-right font-semibold">
+                        Valor
                       </th>
                     </tr>
                   </thead>
@@ -160,8 +202,11 @@ export function EnrollmentSummaryScreen({
                             {course.schedule.map((s) => s.room).join(' / ')}
                           </p>
                         </td>
-                        <td className="py-3.5 pl-3 pr-5 text-right font-mono font-semibold text-[#0F1E36] tabular-nums align-top">
+                        <td className="py-3.5 px-3 text-right font-mono font-semibold text-[#0F1E36] tabular-nums align-top">
                           {course.credits}
+                        </td>
+                        <td className="py-3.5 pl-3 pr-5 text-right font-mono font-semibold text-[#0F1E36] tabular-nums align-top">
+                          {formatCurrencyUSD(course.price)}
                         </td>
                       </tr>
                     ))}
@@ -237,10 +282,10 @@ export function EnrollmentSummaryScreen({
                       />
                       <div>
                         <p className="text-sm font-semibold text-[#0F1E36]">
-                          Pago al contado
+                          Pago con tarjeta
                         </p>
                         <p className="text-xs text-[#64748B] mt-0.5 tabular-nums">
-                          1 pago único de {formatCurrencyUSD(fees.totalAmount)}
+                          En línea, por {formatCurrencyUSD(fees.totalAmount)}
                         </p>
                       </div>
                     </div>
@@ -263,11 +308,10 @@ export function EnrollmentSummaryScreen({
                       />
                       <div>
                         <p className="text-sm font-semibold text-[#0F1E36]">
-                          Fraccionamiento en 4 cuotas
+                          Pago en ventanilla
                         </p>
                         <p className="text-xs text-[#64748B] mt-0.5 tabular-nums">
-                          4 cuotas mensuales de{' '}
-                          {formatCurrencyUSD(installmentAmount)}
+                          Orden de {formatCurrencyUSD(fees.totalAmount)} reservada por 24 horas
                         </p>
                       </div>
                     </div>
@@ -307,7 +351,15 @@ export function EnrollmentSummaryScreen({
                     onClick={() => onNavigate('selection')}
                     className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-white border border-[#CBD5E1] hover:bg-[#F8FAFC] text-[#0F1E36] text-xs font-semibold rounded-lg transition-colors whitespace-nowrap cursor-pointer"
                   >
-                    Volver a Selección de asignaturas
+                    Modificar selección
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleCancel}
+                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 text-[#BF2626] hover:bg-[#FDE8E8] text-xs font-semibold rounded-lg transition-colors whitespace-nowrap cursor-pointer"
+                  >
+                    Cancelar
                   </button>
                 </div>
               </div>

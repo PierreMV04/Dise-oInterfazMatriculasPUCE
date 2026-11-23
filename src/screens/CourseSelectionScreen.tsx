@@ -387,7 +387,7 @@ export function CourseSelectionScreen({
               <div className="text-xs leading-relaxed">
                 <p className="font-semibold">Éxito: Selección validada</p>
                 <p className="opacity-90 mt-0.5">
-                  SIS-601, SIS-602 y SIS-603 cumplen requisitos y no tienen cruce horario.
+                  SIS601, SIS602 y SIS603 cumplen requisitos y no tienen cruce de horario.
                 </p>
               </div>
             </div>
@@ -397,7 +397,7 @@ export function CourseSelectionScreen({
               <div className="text-xs leading-relaxed">
                 <p className="font-semibold">Advertencia: Pocos cupos</p>
                 <p className="opacity-90 mt-0.5">
-                  SIS-604 dispone solo de 6 vacantes. Confirma pronto para asegurar cupo.
+                  SIS601 G1 dispone solo de 3 cupos. Confirma pronto para asegurar tu lugar.
                 </p>
               </div>
             </div>
@@ -407,7 +407,7 @@ export function CourseSelectionScreen({
               <div className="text-xs leading-relaxed">
                 <p className="font-semibold">Error: Cruce o sin cupos</p>
                 <p className="opacity-90 mt-0.5">
-                  IND-503 presenta cruce el Lun 09:00–10:00 y SIS-702 tiene 0 cupos.
+                  SIS607 G1 se cruza con SIS603 G1 el Vie 09:00–10:00 y SIS604 G1 tiene 0 cupos.
                 </p>
               </div>
             </div>

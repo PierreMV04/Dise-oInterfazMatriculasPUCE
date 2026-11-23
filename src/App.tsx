@@ -15,6 +15,7 @@ import {
 } from './data/mockAcademicData';
 import { ConfirmationReceiptScreen } from './screens/ConfirmationReceiptScreen';
 import { CourseSelectionScreen } from './screens/CourseSelectionScreen';
+import { NavigationMapScreen } from './screens/NavigationMapScreen';
 import { DataDictionaryScreen } from './screens/DataDictionaryScreen';
 import { DashboardScreen } from './screens/DashboardScreen';
 import { DesignSystemScreen } from './screens/DesignSystemScreen';
@@ -232,6 +233,10 @@ export default function App() {
               student={currentStudent}
               selectedCourses={selectedCourses}
               onConfirmEnrollment={handleConfirmEnrollment}
+              onCancelEnrollment={() => {
+                handleClearSelection();
+                setCurrentScreen('dashboard');
+              }}
               onNavigate={setCurrentScreen}
             />
           )}
@@ -253,6 +258,7 @@ export default function App() {
           )}
 
           {screen === 'data-dictionary' && <DataDictionaryScreen />}
+          {screen === 'navigation-map' && <NavigationMapScreen />}
 
           {screen === 'design-system' && (
             <DesignSystemScreen onNavigate={setCurrentScreen} />

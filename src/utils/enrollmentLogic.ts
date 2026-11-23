@@ -289,8 +289,8 @@ export function downloadReceiptFile(receipt: EnrollmentReceipt): void {
     `Carga Horaria       : ${receipt.totalHours} horas semanales`,
     `Modalidad de Pago   : ${
       receipt.paymentModality === 'contado'
-        ? 'Pago con tarjeta o en ventanilla'
-        : 'Pago diferido'
+        ? 'Pago con tarjeta (en línea)'
+        : 'Pago en ventanilla (orden reservada 24 horas)'
     }`,
     `Derecho Matrícula   : ${formatCurrencyUSD(receipt.baseFee)}`,
     `Valor de materias  : ${formatCurrencyUSD(receipt.creditCostTotal)}`,
