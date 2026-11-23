@@ -37,6 +37,22 @@ import {
 
 const STORAGE_KEY = 'puce_matricula_ui_v1';
 
+/** Enlaces directos: ?pantalla=seleccion&usuario=L00412398 */
+const URL_PARAMS = new URLSearchParams(window.location.search);
+const SCREEN_PARAM: Record<string, ScreenId> = {
+  login: 'login',
+  menu: 'dashboard',
+  seleccion: 'selection',
+  resumen: 'summary',
+  comprobante: 'confirmation',
+  estado: 'status',
+  diccionario: 'data-dictionary',
+  mapa: 'navigation-map',
+  guia: 'design-system',
+};
+const URL_SCREEN = SCREEN_PARAM[URL_PARAMS.get('pantalla') ?? ''];
+const URL_STUDENT = STUDENTS_DATA.find((s) => s.code === URL_PARAMS.get('usuario'));
+
 const DEFAULT_STUDENT = STUDENTS_DATA[0];
 
 /** Dario Franco ya tiene una matrícula registrada (comprobante MAT-2026-09823). */
@@ -76,10 +92,10 @@ export default function App() {
   const [catalog, setCatalog] = useState<Course[]>(INITIAL_COURSES_CATALOG);
   const [currentStudent, setCurrentStudent] = useState<StudentProfile>(() => {
     const found = STUDENTS_DATA.find((s) => s.code === saved?.studentCode);
-    return found ?? DEFAULT_STUDENT;
+    return URL_STUDENT ?? found ?? DEFAULT_STUDENT;
   });
   const [currentScreen, setCurrentScreen] = useState<ScreenId>(
-    saved?.currentScreen ?? 'login'
+    URL_SCREEN ?? saved?.currentScreen ?? 'login'
   );
   const [systemDate, setSystemDate] = useState<string>(
     saved?.systemDate ?? DEMO_DATE_INSIDE

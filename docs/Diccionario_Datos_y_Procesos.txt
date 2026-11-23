@@ -1,4 +1,4 @@
-=====================================================================
+﻿=====================================================================
 DICCIONARIO DE DATOS Y ESPECIFICACION DE PROCESOS
 Caso de uso: REALIZAR MATRICULA - PUCE        Actor: Estudiante
 Equipo: Pierre Montenegro, Dario Franco, Alex Andino
@@ -181,7 +181,7 @@ P2  VERIFICAR HABILITACION                    Pantallas: 03, 04, 05
              3) Si estado_academico = "Habilitado" y lo anterior es correcto ->
                 habilitar boton "Iniciar matricula" (pantalla 06).
 
-P3  CONSULTAR OFERTA DE ASIGNATURAS           Pantallas: 06
+P3  CONSULTAR OFERTA ACADEMICA           Pantallas: 06
   Entradas : texto de busqueda, filtro de nivel, filtro "Solo disponibles".
   Lee      : D3, D4, D5.
   Salidas  : lista de ASIGNATURA y GRUPO con codigo, nombre, creditos, valor,
@@ -190,7 +190,7 @@ P3  CONSULTAR OFERTA DE ASIGNATURAS           Pantallas: 06
   Logica   : Solo asignaturas de la carrera y nivel del estudiante. Calcula el
              estado de cada una cruzando D4 (aprobadas) y D5 (ya agregadas).
 
-P4  VALIDAR SELECCION                         Pantallas: 06, 07, 08, 09, 10, 11
+P4  VERIFICAR PREREQUISITOS Y CUPOS (validar la seleccion)                         Pantallas: 06, 07, 08, 09, 10, 11
   Entradas : lista de codigo_grupo seleccionados. Lee: D3, D4, D2.
   Salidas  : resultado de validacion; MSG-004 a MSG-011.
   Reglas   : R1 cupo_disponible > 0                       (E1 -> pantalla 10)

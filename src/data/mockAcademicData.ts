@@ -178,7 +178,7 @@ export const INITIAL_COURSES_CATALOG: Course[] = [
 
 /** Selección inicial por estudiante (borrador guardado). */
 export const DEFAULT_SELECTION_BY_STUDENT: Record<string, string[]> = {
-  L00412398: ['SIS601-G1', 'SIS603-G1'],
+  L00412398: ['SIS601-G1', 'SIS602-G1', 'SIS603-G1', 'SIS604-G2'],
   L00412399: [],
   L00412400: [],
 };

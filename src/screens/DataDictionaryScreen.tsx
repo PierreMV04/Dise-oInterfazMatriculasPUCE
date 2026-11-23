@@ -1,4 +1,4 @@
-import { Database, Search } from 'lucide-react';
+﻿import { Database, Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import {
   DATA_DICTIONARY,
@@ -23,7 +23,13 @@ const MESSAGE_STYLE: Record<string, string> = {
 };
 
 export function DataDictionaryScreen() {
-  const [tab, setTab] = useState<Tab>('entities');
+  const [tab, setTab] = useState<Tab>(() => {
+    const p = new URLSearchParams(window.location.search).get('pestana');
+    if (p === 'procesos') return 'processes';
+    if (p === 'mensajes') return 'messages';
+    if (p === 'matriz') return 'matrix';
+    return 'entities';
+  });
   const [query, setQuery] = useState('');
 
   const q = query.trim().toLowerCase();

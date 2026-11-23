@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Diccionario de Datos y especificación de procesos del caso de uso
  * "Realizar Matrícula". Es la misma información del archivo
  * docs/Diccionario_Datos_y_Procesos.txt, estructurada para mostrarla en el sistema.
@@ -251,8 +251,8 @@ export interface DDProcess {
 export const PROCESSES: DDProcess[] = [
   { id: 'P1', name: 'Autenticar acceso', screens: '01, 02', inputs: 'correo_institucional o código, clave', outputs: 'Sesión iniciada; o MSG-001', logic: 'Si coinciden con ESTUDIANTE, crea la SESION y va al menú principal. Si no, muestra el error y no avanza.' },
   { id: 'P2', name: 'Verificar habilitación', screens: '03, 04, 05', inputs: 'codigo_estudiante, fecha del sistema', outputs: 'Estado de habilitación; MSG-002 o MSG-003', logic: 'Si estado_financiero = Con deuda, bloquea (A2). Si la fecha está fuera de 2026-02-02 a 2026-02-13, bloquea (A1). Si no, habilita Realizar matrícula.' },
-  { id: 'P3', name: 'Consultar oferta de asignaturas', screens: '06', inputs: 'texto de búsqueda, filtros', outputs: 'ASIGNATURA y GRUPO con cupo, horario y estado', logic: 'Solo asignaturas de la carrera y nivel del estudiante; calcula el estado de cada una con el historial y la selección.' },
-  { id: 'P4', name: 'Validar selección', screens: '06, 07 a 11', inputs: 'grupos seleccionados', outputs: 'Resultado de validación; MSG-004 a MSG-011', logic: 'Reglas: cupo > 0 (E1); prerrequisitos aprobados (E2); correquisitos seleccionados; créditos ≤ 20 (E4); sin cruce de horario (E3); al menos una asignatura.' },
+  { id: 'P3', name: 'Consultar oferta académica', screens: '06', inputs: 'texto de búsqueda, filtros', outputs: 'ASIGNATURA y GRUPO con cupo, horario y estado', logic: 'Solo asignaturas de la carrera y nivel del estudiante; calcula el estado de cada una con el historial y la selección.' },
+  { id: 'P4', name: 'Verificar prerrequisitos y cupos', screens: '06, 07 a 11', inputs: 'grupos seleccionados', outputs: 'Resultado de validación; MSG-004 a MSG-011', logic: 'Reglas: cupo > 0 (E1); prerrequisitos aprobados (E2); correquisitos seleccionados; créditos ≤ 20 (E4); sin cruce de horario (E3); al menos una asignatura.' },
   { id: 'P5', name: 'Gestionar lista de espera', screens: '10', inputs: 'codigo_estudiante, codigo_grupo', outputs: 'Posición en la lista', logic: 'Agrega al estudiante a LISTA_ESPERA con la fecha de solicitud; no suma créditos ni valor.' },
   { id: 'P6', name: 'Registrar matrícula', screens: '12, 13', inputs: 'selección validada, acepta_reglamento', outputs: 'MATRICULA en estado Pendiente de pago; MSG-012 o MSG-013', logic: 'Exige el reglamento aceptado, revalida todo, descuenta cupos y crea MATRICULA y DETALLE. Si un cupo se agotó (E5), no cobra y regresa a Selección.' },
   { id: 'P7', name: 'Generar orden de pago', screens: '14', inputs: 'MATRICULA.valor_total', outputs: 'ORDEN_PAGO con vencimiento a 24 horas', logic: 'Reserva los cupos 24 horas. Si la orden vence sin pago, la matrícula pasa a Anulada y se devuelven los cupos.' },

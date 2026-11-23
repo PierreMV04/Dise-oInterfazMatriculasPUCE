@@ -1,4 +1,4 @@
-﻿import { ArrowLeft, CheckCircle2, CreditCard } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, CreditCard } from 'lucide-react';
 import { useState } from 'react';
 import { StudentHeaderCard } from '../components/StudentHeaderCard';
 import { SystemMessageBanner } from '../components/SystemMessageBanner';
@@ -85,7 +85,7 @@ export function EnrollmentSummaryScreen({
     <div className="space-y-6">
       <StudentHeaderCard
         student={student}
-        subtitle="Paso 2 de 3 · Resumen de matrícula"
+        subtitle="Resumen de matrícula · Confirmación pendiente"
         rightSlot={
           <button
             type="button"
@@ -122,8 +122,8 @@ export function EnrollmentSummaryScreen({
           message={{
             id: 'summary-warnings',
             type: 'warning',
-            title: 'Advertencias',
-            description: 'Revisa estos puntos antes de confirmar:',
+            title: 'Revisa tu selección',
+            description: 'Antes de confirmar ten en cuenta lo siguiente:',
             details: warningList,
           }}
         />
