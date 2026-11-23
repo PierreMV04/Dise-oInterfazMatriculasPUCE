@@ -1,11 +1,12 @@
-export type ScreenId =
+﻿export type ScreenId =
   | 'login'
   | 'dashboard'
   | 'selection'
   | 'summary'
   | 'confirmation'
   | 'status'
-  | 'design-system';
+  | 'design-system'
+  | 'data-dictionary';
 
 export type DayOfWeek = 'Lun' | 'Mar' | 'Mié' | 'Jue' | 'Vie' | 'Sáb';
 

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Sistema de Matrícula PUCE · Diseño de interfaz (caso de uso Realizar Matrícula)
  * Basado en el portal creado por el equipo, adaptado a PUCE.
  */
@@ -15,6 +15,7 @@ import {
 } from './data/mockAcademicData';
 import { ConfirmationReceiptScreen } from './screens/ConfirmationReceiptScreen';
 import { CourseSelectionScreen } from './screens/CourseSelectionScreen';
+import { DataDictionaryScreen } from './screens/DataDictionaryScreen';
 import { DashboardScreen } from './screens/DashboardScreen';
 import { DesignSystemScreen } from './screens/DesignSystemScreen';
 import { EnrollmentStatusScreen } from './screens/EnrollmentStatusScreen';
@@ -250,6 +251,8 @@ export default function App() {
               onNavigate={setCurrentScreen}
             />
           )}
+
+          {screen === 'data-dictionary' && <DataDictionaryScreen />}
 
           {screen === 'design-system' && (
             <DesignSystemScreen onNavigate={setCurrentScreen} />

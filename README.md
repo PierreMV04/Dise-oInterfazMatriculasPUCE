@@ -21,3 +21,8 @@ npm run build    # genera dist/ (sitio estático)
 | L00412400 | Pierre Montenegro | Con deuda pendiente (bloqueo A2) |
 
 La barra inferior permite cambiar la fecha del sistema para ver el periodo cerrado (A1).
+
+## Documentación
+
+- Diccionario de datos y procesos: se ve dentro del sistema (botón **Diccionario de datos**) y en [`docs/Diccionario_Datos_y_Procesos.txt`](docs/Diccionario_Datos_y_Procesos.txt).
+- Mapa de navegación (draw.io): [`docs/Mapa_Navegacion_Matricula.drawio`](docs/Mapa_Navegacion_Matricula.drawio).

@@ -1,4 +1,4 @@
-﻿import { Menu, Palette, X } from 'lucide-react';
+﻿import { Database, Menu, Palette, X } from 'lucide-react';
 import { useState } from 'react';
 import { ScreenId } from '../types/enrollment';
 
@@ -79,6 +79,19 @@ export function TopNavBar({ currentScreen, onNavigate }: TopNavBarProps) {
         <div className="flex items-center gap-3 shrink-0">
           <button
             type="button"
+            onClick={() => handleNavClick('data-dictionary')}
+            className={`hidden sm:inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1D4ED8] ${
+              currentScreen === 'data-dictionary'
+                ? 'bg-[#1D4ED8] text-white'
+                : 'bg-[#F1F5F9] text-[#0F1E36] hover:bg-[#E2E8F0]'
+            }`}
+          >
+            <Database className="w-3.5 h-3.5" />
+            <span>Diccionario de datos</span>
+          </button>
+
+          <button
+            type="button"
             onClick={() => handleNavClick('design-system')}
             className={`hidden sm:inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1D4ED8] ${
               currentScreen === 'design-system'
@@ -154,6 +167,17 @@ export function TopNavBar({ currentScreen, onNavigate }: TopNavBarProps) {
             );
           })}
           <div className="pt-2 border-t border-[#E2E6ED]">
+            <button
+              type="button"
+              onClick={() => handleNavClick('data-dictionary')}
+              className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-semibold cursor-pointer ${
+                currentScreen === 'data-dictionary'
+                  ? 'bg-[#1D4ED8] text-white'
+                  : 'text-[#1D4ED8] hover:bg-[#EFF6FF]'
+              }`}
+            >
+              Diccionario de datos y procesos
+            </button>
             <button
               type="button"
               onClick={() => handleNavClick('design-system')}

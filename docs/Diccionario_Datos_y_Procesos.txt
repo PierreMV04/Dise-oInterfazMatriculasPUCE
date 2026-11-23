@@ -1,0 +1,279 @@
+=====================================================================
+DICCIONARIO DE DATOS Y ESPECIFICACION DE PROCESOS
+Caso de uso: REALIZAR MATRICULA - PUCE        Actor: Estudiante
+Equipo: Pierre Montenegro, Dario Franco, Alex Andino
+Periodo de ejemplo: 2026-02 (matricula ordinaria 2 al 13 de febrero de 2026)
+=====================================================================
+
+PARTE 1. DICCIONARIO DE DATOS
+---------------------------------------------------------------------
+Formato por campo:  nombre_campo | tipo | longitud/formato | obligatorio | descripcion / regla
+(PK = llave primaria, FK = llave foranea)
+
+ENTIDAD 1: ESTUDIANTE
+  codigo_estudiante      | texto   | "L" + 8 digitos (L00412398) | Si | PK. Identifica al estudiante.
+  cedula                 | texto   | 10 digitos                  | Si | Documento de identidad.
+  nombres                | texto   | max 60                      | Si | Nombres del estudiante.
+  apellidos              | texto   | max 60                      | Si | Apellidos del estudiante.
+  correo_institucional   | texto   | max 80, formato correo      | Si | Usuario de acceso al sistema.
+  clave_cifrada          | texto   | hash                        | Si | Nunca se muestra en pantalla.
+  codigo_carrera         | texto   | 6                           | Si | FK a CARRERA.
+  nivel_actual           | entero  | 1 a 10                      | Si | Nivel de la malla (ej. 6).
+  estado_academico       | texto   | Habilitado / No habilitado  | Si | Resultado de la verificacion academica.
+  estado_financiero      | texto   | Al dia / Con deuda          | Si | "Con deuda" bloquea la matricula (A2).
+  valor_deuda            | decimal | 8,2 en USD                  | No | Monto pendiente si estado_financiero = Con deuda.
+
+ENTIDAD 2: CARRERA
+  codigo_carrera         | texto   | 6                           | Si | PK.
+  nombre_carrera         | texto   | max 80                      | Si | Ej. "Ingenieria de Sistemas".
+  creditos_malla         | entero  | 1 a 400                     | Si | Total de creditos de la malla.
+
+ENTIDAD 3: PERIODO
+  codigo_periodo         | texto   | AAAA-NN (2026-02)           | Si | PK.
+  fecha_inicio_ordinaria | fecha   | AAAA-MM-DD                  | Si | 2026-02-02.
+  fecha_fin_ordinaria    | fecha   | AAAA-MM-DD                  | Si | 2026-02-13.
+  creditos_maximos       | entero  | 1 a 30                      | Si | Valor 20. Regla E4.
+  derechos_matricula     | decimal | 6,2 en USD                  | Si | Valor 50.00.
+  minutos_inactividad    | entero  | 1 a 60                      | Si | Valor 15. Regla E6.
+
+ENTIDAD 4: ASIGNATURA
+  codigo_asignatura      | texto   | "SIS" + 3 digitos           | Si | PK. Ej. SIS601.
+  nombre_asignatura      | texto   | max 80                      | Si | Ej. "Diseno de Sistemas".
+  creditos               | entero  | 1 a 5                       | Si | Creditos de la asignatura.
+  valor_asignatura       | decimal | 6,2 en USD                  | Si | Ej. 4 creditos = 120.00.
+  nivel                  | entero  | 1 a 10                      | Si | Nivel dentro de la malla.
+  codigo_carrera         | texto   | 6                           | Si | FK a CARRERA.
+
+ENTIDAD 5: REQUISITO_ASIGNATURA
+  codigo_asignatura      | texto   | "SIS" + 3 digitos           | Si | FK. Asignatura que exige el requisito.
+  codigo_requisito       | texto   | "SIS" + 3 digitos           | Si | FK. Asignatura requerida.
+  tipo_requisito         | texto   | Prerrequisito / Correquisito| Si | Prerrequisito se valida contra el historial (E2).
+
+ENTIDAD 6: HISTORIAL_ACADEMICO
+  codigo_estudiante      | texto   | L + 8 digitos               | Si | FK a ESTUDIANTE.
+  codigo_asignatura      | texto   | "SIS" + 3 digitos           | Si | FK a ASIGNATURA.
+  codigo_periodo         | texto   | AAAA-NN                     | Si | Periodo en que se cursó.
+  nota_final             | decimal | 4,2 (0 a 100)               | No | Nota obtenida.
+  estado_asignatura      | texto   | Aprobada / Reprobada / Cursando | Si | Solo "Aprobada" cumple un prerrequisito.
+
+ENTIDAD 7: DOCENTE
+  codigo_docente         | texto   | 6                           | Si | PK.
+  nombre_docente         | texto   | max 80                      | Si | Ej. "Ing. Yolanda Garcia".
+
+ENTIDAD 8: GRUPO
+  codigo_grupo           | texto   | max 12 (SIS601-G1)          | Si | PK.
+  codigo_asignatura      | texto   | "SIS" + 3 digitos           | Si | FK a ASIGNATURA.
+  codigo_periodo         | texto   | AAAA-NN                     | Si | FK a PERIODO.
+  numero_grupo           | texto   | G1, G2, ...                 | Si | Etiqueta visible del grupo.
+  codigo_docente         | texto   | 6                           | Si | FK a DOCENTE.
+  dia_clase              | texto   | Lun, Mar, Mie, Jue, Vie     | Si | Puede repetirse en varios registros HORARIO.
+  hora_inicio            | hora    | HH:MM                       | Si | Ej. 07:00.
+  hora_fin               | hora    | HH:MM                       | Si | Debe ser mayor a hora_inicio.
+  cupo_total             | entero  | 1 a 60                      | Si | Capacidad del grupo.
+  cupo_disponible        | entero  | 0 a cupo_total              | Si | Si es 0 aplica E1 y E5.
+
+ENTIDAD 9: MATRICULA
+  numero_matricula       | texto   | "MAT-" AAAA "-" 5 digitos   | Si | PK. Ej. MAT-2026-09823 (es el numero del comprobante).
+  codigo_estudiante      | texto   | L + 8 digitos               | Si | FK a ESTUDIANTE.
+  codigo_periodo         | texto   | AAAA-NN                     | Si | FK a PERIODO.
+  fecha_registro         | fecha-hora | AAAA-MM-DD HH:MM         | Si | Momento de confirmacion.
+  total_creditos         | entero  | 0 a creditos_maximos        | Si | Suma de creditos del detalle.
+  valor_materias         | decimal | 8,2 en USD                  | Si | Suma de valores del detalle.
+  derechos_matricula     | decimal | 6,2 en USD                  | Si | Se copia desde PERIODO.
+  valor_total            | decimal | 8,2 en USD                  | Si | valor_materias + derechos_matricula.
+  acepta_reglamento      | logico  | Si / No                     | Si | Debe ser Si para confirmar.
+  estado_matricula       | texto   | Borrador / Pendiente de pago / Matriculado / Anulada | Si | Ciclo de vida de la matricula.
+
+ENTIDAD 10: DETALLE_MATRICULA
+  numero_matricula       | texto   | MAT-AAAA-NNNNN              | Si | FK a MATRICULA.
+  codigo_grupo           | texto   | max 12                      | Si | FK a GRUPO. Una asignatura por matricula.
+  creditos               | entero  | 1 a 5                       | Si | Copia de ASIGNATURA.creditos.
+  valor                  | decimal | 6,2 en USD                  | Si | Copia de ASIGNATURA.valor_asignatura.
+  estado_detalle         | texto   | Agregada / Confirmada / Retirada | Si | Estado visible en la tabla.
+
+ENTIDAD 11: LISTA_ESPERA
+  codigo_estudiante      | texto   | L + 8 digitos               | Si | FK.
+  codigo_grupo           | texto   | max 12                      | Si | FK.
+  fecha_solicitud        | fecha-hora | AAAA-MM-DD HH:MM         | Si | Define el orden de la cola.
+  posicion               | entero  | 1 a 99                      | Si | Lugar en la lista.
+
+ENTIDAD 12: ORDEN_PAGO
+  numero_orden           | texto   | "ORD-" + 8 digitos          | Si | PK.
+  numero_matricula       | texto   | MAT-AAAA-NNNNN              | Si | FK a MATRICULA.
+  monto                  | decimal | 8,2 en USD                  | Si | Igual a MATRICULA.valor_total.
+  metodo_pago            | texto   | Tarjeta / Ventanilla        | Si | Elegido en pantalla Pago.
+  fecha_emision          | fecha-hora | AAAA-MM-DD HH:MM         | Si | Momento de generacion.
+  fecha_vencimiento      | fecha-hora | AAAA-MM-DD HH:MM         | Si | fecha_emision + 24 horas (reserva de cupos).
+  estado_orden           | texto   | Vigente / Pagada / Vencida  | Si | Si vence, se liberan los cupos.
+
+ENTIDAD 13: PAGO
+  codigo_transaccion     | texto   | 12                          | Si | PK.
+  numero_orden           | texto   | ORD-NNNNNNNN                | Si | FK a ORDEN_PAGO.
+  estado_pago            | texto   | Aprobado / Rechazado        | Si | Resultado de la pasarela o del banco.
+  motivo_rechazo         | texto   | max 120                     | No | Obligatorio si estado_pago = Rechazado.
+  fecha_pago             | fecha-hora | AAAA-MM-DD HH:MM         | Si | Momento del intento.
+
+ENTIDAD 14: SESION
+  codigo_sesion          | texto   | 32                          | Si | PK.
+  codigo_estudiante      | texto   | L + 8 digitos               | Si | FK.
+  hora_inicio_sesion     | fecha-hora | AAAA-MM-DD HH:MM         | Si | Momento de ingreso.
+  ultima_actividad       | fecha-hora | AAAA-MM-DD HH:MM         | Si | Si pasan 15 min sin actividad expira (E6).
+  seleccion_guardada     | texto   | lista de codigo_grupo       | No | Se restaura al volver a ingresar.
+
+ENTIDAD 15: MENSAJE_SISTEMA
+  codigo_mensaje         | texto   | "MSG-" + 3 digitos          | Si | PK.
+  tipo_mensaje           | texto   | Exito / Advertencia / Error | Si | Define el color del aviso.
+  texto_mensaje          | texto   | max 200                     | Si | Texto mostrado al usuario.
+
+ENTIDAD 16: HORARIO_GRUPO  (un registro por dia de clase de cada grupo)
+  codigo_grupo           | texto   | max 12                      | Si | FK a GRUPO.
+  dia_clase              | texto   | Lun, Mar, Mie, Jue, Vie, Sab| Si | Dia de la clase.
+  hora_inicio            | hora    | HH:MM                       | Si | Ej. 07:00.
+  hora_fin               | hora    | HH:MM                       | Si | Mayor que hora_inicio. Dos grupos se cruzan (E3) si comparten dia y sus horas se solapan.
+  (En GRUPO ya no se guardan dia_clase, hora_inicio ni hora_fin: se leen de HORARIO_GRUPO.)
+
+CATALOGO DE MENSAJES (MENSAJE_SISTEMA)
+  MSG-001 Error        "Usuario o contrasena incorrectos."
+  MSG-002 Error        "Tienes valores pendientes. Regularizalos en Tesoreria para habilitar tu matricula."   (A2)
+  MSG-003 Error        "El periodo de matricula ordinaria esta cerrado."   (A1)
+  MSG-004 Error        "Requiere haber aprobado {requisito}."   (E2)
+  MSG-005 Advertencia  "Debes agregar tambien el correquisito {asignatura}."
+  MSG-006 Error        "No puedes superar 20 creditos."   (E4)
+  MSG-007 Advertencia  "El grupo {grupo} no tiene cupos. Elige otro grupo o ingresa a la lista de espera."   (E1)
+  MSG-008 Advertencia  "El grupo coincide en horario con {asignatura}. Te sugerimos el grupo {grupo}."   (E3)
+  MSG-009 Error        "Selecciona al menos una materia para continuar."
+  MSG-010 Exito        "Materia agregada a tu seleccion."
+  MSG-011 Exito        "Validacion exitosa. Puedes continuar."
+  MSG-012 Error        "El cupo de {asignatura} se agoto mientras confirmabas."   (E5)
+  MSG-013 Error        "Debes aceptar el Reglamento de Matricula para continuar."
+  MSG-014 Error        "Pago rechazado: {motivo}."
+  MSG-015 Advertencia  "Tu sesion expiro por inactividad. Tu seleccion se guardo."   (E6)
+  MSG-016 Exito        "Matricula exitosa. Comprobante {numero_matricula}."
+
+ALMACENES DE DATOS DEL DFD
+  D1 Estudiantes (ESTUDIANTE, CARRERA)         D2 Periodos (PERIODO)
+  D3 Oferta academica (ASIGNATURA, REQUISITO_ASIGNATURA, DOCENTE, GRUPO)
+  D4 Historial academico (HISTORIAL_ACADEMICO)
+  D5 Matriculas (MATRICULA, DETALLE_MATRICULA, LISTA_ESPERA)
+  D6 Pagos (ORDEN_PAGO, PAGO)                  D7 Sesiones (SESION)
+  D8 Mensajes (MENSAJE_SISTEMA)
+ENTIDADES EXTERNAS: Estudiante, Pasarela de pagos / Banco, Tesoreria.
+
+
+PARTE 2. ESPECIFICACION DE PROCESOS
+---------------------------------------------------------------------
+Excepciones del caso de uso: A1 periodo cerrado, A2 bloqueo financiero,
+E1 grupo sin cupo, E2 prerrequisito no cumplido, E3 cruce de horario,
+E4 excede creditos, E5 cupo agotado al confirmar, E6 sesion expirada.
+
+P1  AUTENTICAR ACCESO                         Pantallas: 01, 02
+  Entradas : correo_institucional, clave (Estudiante). Lee: D1.
+  Salidas  : sesion iniciada (D7); o MSG-001.
+  Logica   : Si correo y clave coinciden con ESTUDIANTE -> crear SESION y
+             enviar a pantalla 03. Si no -> mostrar pantalla 02 y no avanzar.
+
+P2  VERIFICAR HABILITACION                    Pantallas: 03, 04, 05
+  Entradas : codigo_estudiante. Lee: D1, D2.
+  Salidas  : estado de habilitacion; MSG-002 o MSG-003.
+  Logica   : 1) Si estado_financiero = "Con deuda" -> pantalla 04 (A2), no avanza.
+             2) Si fecha actual fuera de fecha_inicio_ordinaria..fecha_fin_ordinaria
+                -> pantalla 05 (A1), no avanza.
+             3) Si estado_academico = "Habilitado" y lo anterior es correcto ->
+                habilitar boton "Iniciar matricula" (pantalla 06).
+
+P3  CONSULTAR OFERTA DE ASIGNATURAS           Pantallas: 06
+  Entradas : texto de busqueda, filtro de nivel, filtro "Solo disponibles".
+  Lee      : D3, D4, D5.
+  Salidas  : lista de ASIGNATURA y GRUPO con codigo, nombre, creditos, valor,
+             cupo_disponible, horario y estado (Disponible, Agregada,
+             Requisito pendiente, Correquisito).
+  Logica   : Solo asignaturas de la carrera y nivel del estudiante. Calcula el
+             estado de cada una cruzando D4 (aprobadas) y D5 (ya agregadas).
+
+P4  VALIDAR SELECCION                         Pantallas: 06, 07, 08, 09, 10, 11
+  Entradas : lista de codigo_grupo seleccionados. Lee: D3, D4, D2.
+  Salidas  : resultado de validacion; MSG-004 a MSG-011.
+  Reglas   : R1 cupo_disponible > 0                       (E1 -> pantalla 10)
+             R2 prerrequisitos con estado "Aprobada"       (E2 -> pantalla 07)
+             R3 correquisitos tambien seleccionados        (-> pantalla 08)
+             R4 total_creditos <= creditos_maximos (20)    (E4 -> pantalla 09)
+             R5 sin cruce de dia/hora entre grupos         (E3 -> pantalla 11)
+             R6 al menos una asignatura                    (MSG-009)
+  Logica   : Si todas las reglas se cumplen -> MSG-011 y habilitar "Continuar"
+             (pantalla 12). Si falla una -> mostrar su pantalla/mensaje y
+             regresar a 06 con la seleccion conservada.
+
+P5  GESTIONAR LISTA DE ESPERA                 Pantallas: 10
+  Entradas : codigo_estudiante, codigo_grupo. Escribe: D5 (LISTA_ESPERA).
+  Salidas  : posicion en la lista.
+  Logica   : Si el estudiante elige lista de espera, se agrega con la fecha de
+             solicitud; no suma creditos ni valor a la matricula.
+
+P6  REGISTRAR MATRICULA                       Pantallas: 12, 13
+  Entradas : seleccion validada, acepta_reglamento. Lee/Escribe: D3, D5.
+  Salidas  : MATRICULA en estado "Pendiente de pago"; MSG-012 o MSG-013.
+  Logica   : 1) Si acepta_reglamento = No -> MSG-013, no avanza.
+             2) Revalida cupo, requisitos, creditos y horarios (P4).
+             3) Si algun cupo_disponible = 0 -> pantalla 13 (E5), sin cobro,
+                regresa a 06.
+             4) Si todo es valido -> descuenta cupo_disponible, crea
+                MATRICULA + DETALLE_MATRICULA y llama a P7.
+
+P7  GENERAR ORDEN DE PAGO                     Pantallas: 14
+  Entradas : MATRICULA.valor_total. Escribe: D6.
+  Salidas  : ORDEN_PAGO con fecha_vencimiento = emision + 24 h.
+  Logica   : Los cupos quedan reservados durante 24 h. Si la orden vence sin
+             pago, la matricula pasa a "Anulada" y se devuelven los cupos.
+
+P8  PROCESAR PAGO                             Pantallas: 14, 15
+  Entradas : metodo_pago, datos de tarjeta (solo se envian a la pasarela).
+  Lee/Escribe: D6. Externo: Pasarela de pagos / Banco.
+  Salidas  : PAGO Aprobado o Rechazado; MSG-014.
+  Logica   : Tarjeta aprobada -> P9. Tarjeta rechazada -> pantalla 15 y
+             regreso a 14 (reintentar o cambiar metodo). Ventanilla ->
+             queda orden Vigente y se muestra el comprobante provisional.
+
+P9  GENERAR COMPROBANTE                       Pantallas: 16
+  Entradas : MATRICULA, PAGO aprobado. Escribe: D5.
+  Salidas  : estado_matricula = "Matriculado"; comprobante con
+             numero_matricula (MAT-2026-09823), materias, grupos, horario,
+             total pagado; MSG-016.
+  Logica   : Solo se ejecuta con pago aprobado o con orden de ventanilla
+             emitida.
+
+P10 CONSULTAR ESTADO DE MATRICULA             Pantallas: 18 (Consulta de estado)
+  Entradas : codigo_estudiante, codigo_periodo. Lee: D5, D6.
+  Salidas  : estado_matricula, materias y grupos, estado de la orden/pago,
+             fecha de vencimiento si hay orden Vigente.
+  Logica   : Solo lectura. Desde aqui el estudiante regresa al menu (03) o
+             descarga el comprobante.
+
+P11 GESTIONAR SESION                          Pantallas: 17 (Sesion expirada)
+  Entradas : ultima_actividad. Lee/Escribe: D7.
+  Salidas  : cierre de sesion; seleccion_guardada.
+  Logica   : Si pasan 15 minutos sin actividad (E6) en pantallas 06, 12 o 14
+             -> guardar la seleccion, cerrar sesion y mostrar pantalla 17.
+             Al volver a iniciar sesion se restaura la seleccion.
+
+
+PARTE 3. MATRIZ PANTALLA - PROCESO - DATOS
+---------------------------------------------------------------------
+Pantalla                         Procesos      Entidades principales
+01 Inicio de sesion              P1            ESTUDIANTE, SESION
+02 Error de credenciales         P1            MENSAJE_SISTEMA
+03 Panel del estudiante          P2            ESTUDIANTE, PERIODO
+04 Bloqueo financiero (A2)       P2            ESTUDIANTE (estado_financiero)
+05 Periodo cerrado (A1)          P2            PERIODO
+06 Oferta de materias            P3, P4        ASIGNATURA, GRUPO, REQUISITO_ASIGNATURA, DETALLE_MATRICULA
+07 Prerrequisito (E2)            P4            HISTORIAL_ACADEMICO, REQUISITO_ASIGNATURA
+08 Correquisito pendiente        P4            REQUISITO_ASIGNATURA
+09 Excede creditos (E4)          P4            PERIODO (creditos_maximos)
+10 Sin cupo / espera (E1)        P4, P5        GRUPO, LISTA_ESPERA
+11 Cruce de horario (E3)         P4            GRUPO
+12 Resumen de matricula          P6            MATRICULA, DETALLE_MATRICULA
+13 Cupo agotado (E5)             P6            GRUPO
+14 Pago de matricula             P7, P8        ORDEN_PAGO, PAGO
+15 Pago rechazado                P8            PAGO
+16 Matricula exitosa             P9            MATRICULA
+17 Sesion expirada (E6)          P11           SESION
+18 Consulta de estado (nueva)    P10           MATRICULA, ORDEN_PAGO, PAGO
