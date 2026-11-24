@@ -12,6 +12,7 @@ export const MAIN_FLOW = [
   '01 Inicio de sesión',
   '03 Menú principal',
   '06 Selección de asignaturas',
+  'Solicitud de matrícula',
   '12 Resumen de matrícula',
   '14 Pago',
   '16 Comprobante',
@@ -31,9 +32,12 @@ export const NAV_CONNECTIONS: NavConnection[] = [
   { from: '06 Selección de asignaturas', to: '10 Grupo sin cupo', condition: 'Si el grupo no tiene cupo (E1), entonces ofrecer otro grupo o lista de espera', kind: 'excepcion' },
   { from: '06 Selección de asignaturas', to: '11 Cruce de horario', condition: 'Si el grupo choca con otra materia seleccionada (E3), entonces sugerir otro grupo', kind: 'excepcion' },
   { from: '07, 08, 09, 10, 11', to: '06 Selección de asignaturas', condition: 'Aceptar, agregar correquisito, quitar materia o elegir otro grupo: vuelve conservando la selección', kind: 'excepcion' },
-  { from: '06 Selección de asignaturas', to: '12 Resumen de matrícula', condition: 'Si la validación de cupos, prerrequisitos, créditos y horarios es exitosa y hay al menos una materia, clic en Continuar', kind: 'principal' },
+  { from: '06 Selección de asignaturas', to: 'Solicitud de matrícula', condition: 'Si la validación de cupos, prerrequisitos, créditos y horarios es exitosa y hay al menos una materia, clic en Continuar', kind: 'principal' },
+  { from: 'Solicitud de matrícula', to: '12 Resumen de matrícula', condition: 'Si el celular, el método de pago y el reglamento son válidos y P4 revalida la selección, clic en Enviar solicitud', kind: 'principal' },
+  { from: 'Solicitud de matrícula', to: '06 Selección de asignaturas', condition: 'Clic en Modificar selección (se conserva lo ingresado)', kind: 'principal' },
+  { from: 'Solicitud de matrícula', to: '03 Menú principal', condition: 'Clic en Cancelar y confirmar el descarte', kind: 'principal' },
   { from: '06 Selección de asignaturas', to: '03 Menú principal', condition: 'Clic en Cancelar y confirmar el descarte de la selección', kind: 'principal' },
-  { from: '12 Resumen de matrícula', to: '06 Selección de asignaturas', condition: 'Clic en Modificar selección', kind: 'principal' },
+  { from: '12 Resumen de matrícula', to: 'Solicitud de matrícula', condition: 'Clic en Editar solicitud o Modificar selección (vuelve a la selección)', kind: 'principal' },
   { from: '12 Resumen de matrícula', to: '13 Cupo agotado', condition: 'Si al confirmar el sistema revalida y un cupo se agotó (E5), entonces avisar y no avanzar', kind: 'excepcion' },
   { from: '13 Cupo agotado', to: '06 Selección de asignaturas', condition: 'Clic en Elegir otro grupo', kind: 'excepcion' },
   { from: '12 Resumen de matrícula', to: '14 Pago', condition: 'Si el reglamento está aceptado y los cupos siguen vigentes, clic en Confirmar matrícula', kind: 'principal' },
@@ -64,4 +68,39 @@ export const INTERFACE_RULES: InterfaceRule[] = [
   { id: 6, rule: 'Dos materias no pueden tener horarios cruzados (E3)', screen: 'Selección de asignaturas', message: 'Laboratorio de Redes G1 coincide con Redes G1. Te sugerimos el grupo G2.', action: 'No agrega el grupo y sugiere uno sin cruce' },
   { id: 7, rule: 'La matrícula solo procede del 2 al 13 de febrero de 2026 (A1)', screen: 'Menú principal', message: 'El periodo de matrícula ordinaria está cerrado.', action: 'Bloquea Realizar matrícula' },
   { id: 8, rule: 'La sesión expira a los 15 minutos de inactividad (E6)', screen: 'Selección, Resumen y Pago', message: 'Tu sesión expiró por inactividad. Tu selección se guardó.', action: 'Cierra la sesión y restaura la selección al volver a ingresar' },
+];
+
+export interface IoRow {
+  input: string;
+  process: string;
+  output: string;
+  link: string;
+}
+
+/** Taller 13.2 · Paso 4: matriz Entrada – Proceso – Salida. */
+export const IO_MATRIX: IoRow[] = [
+  {
+    input: 'Formulario de Solicitud de Matrícula',
+    process: 'P4 Verificar prerrequisitos y cupos (al presionar Enviar solicitud). P6 Registrar matrícula, P7 Generar orden de pago y P9 Generar comprobante (al confirmar en el Resumen).',
+    output: 'Resumen de matrícula y, al confirmar, Comprobante de Matrícula (MATRICULA, DETALLE_MATRICULA y ORDEN_PAGO).',
+    link: 'Sí. Es la continuación directa de Selección de asignaturas: Continuar abre la Solicitud y sus asignaturas vienen de la selección guardada (SESION.seleccion_guardada). Enviar solicitud lleva al Resumen.',
+  },
+  {
+    input: 'Filtros del reporte de matriculados (periodo, carrera, asignatura)',
+    process: 'P12 Generar reporte de matriculados.',
+    output: 'Reporte de Matriculados por asignatura, con totales y cupos ocupados.',
+    link: 'Sí. Lee las matrículas que P6 crea al confirmar en el Resumen y los cupos del catálogo que se consultan en Selección de asignaturas.',
+  },
+  {
+    input: 'Selección de asignaturas',
+    process: 'P3 Consultar oferta académica y P4 Verificar prerrequisitos y cupos.',
+    output: 'Selección guardada de forma temporal (SESION.seleccion_guardada) y mensajes MSG-004 a MSG-011. No escribe en MATRICULA.',
+    link: 'Es la pantalla de trabajo del Taller 13.1 (Paso 2). Su botón Continuar abre el Formulario de Solicitud.',
+  },
+  {
+    input: 'Resumen de matrícula',
+    process: 'P6 Registrar matrícula, con P7 Generar orden de pago y P9 Generar comprobante.',
+    output: 'Comprobante de Matrícula con estado Matriculado o Pendiente de pago.',
+    link: 'Es la pantalla del Taller 13.1 (Paso 4). Confirmar matrícula es el único punto que registra la matrícula y genera el comprobante.',
+  },
 ];

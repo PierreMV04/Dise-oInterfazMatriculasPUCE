@@ -5,6 +5,7 @@ import { SystemMessageBanner } from '../components/SystemMessageBanner';
 import { WeeklyScheduleGrid } from '../components/WeeklyScheduleGrid';
 import {
   Course,
+  EnrollmentRequest,
   PaymentModality,
   ScreenId,
   StudentProfile,
@@ -20,6 +21,7 @@ import {
 interface EnrollmentSummaryScreenProps {
   student: StudentProfile;
   selectedCourses: Course[];
+  request: EnrollmentRequest;
   onConfirmEnrollment: (paymentModality: PaymentModality) => void;
   onCancelEnrollment: () => void;
   onNavigate: (screen: ScreenId) => void;
@@ -28,13 +30,11 @@ interface EnrollmentSummaryScreenProps {
 export function EnrollmentSummaryScreen({
   student,
   selectedCourses,
+  request,
   onConfirmEnrollment,
   onCancelEnrollment,
   onNavigate,
 }: EnrollmentSummaryScreenProps) {
-  const [paymentModality, setPaymentModality] =
-    useState<PaymentModality>('contado');
-  const [acceptedDeclaration, setAcceptedDeclaration] = useState(false);
   const [message, setMessage] = useState<SystemMessage | null>(null);
 
   const validation = validateEnrollmentSelection(selectedCourses, student);
@@ -67,18 +67,12 @@ export function EnrollmentSummaryScreen({
       return;
     }
 
-    if (!acceptedDeclaration) {
-      setMessage({
-        id: String(Date.now()),
-        type: 'warning',
-        title: 'Aceptación requerida',
-        description:
-          'Marca la casilla de conformidad académica y reglamento de matrícula para finalizar el registro.',
-      });
+    if (request.paymentMethod === '') {
+      onNavigate('request');
       return;
     }
 
-    onConfirmEnrollment(paymentModality);
+    onConfirmEnrollment(request.paymentMethod as PaymentModality);
   };
 
   return (
@@ -259,80 +253,16 @@ export function EnrollmentSummaryScreen({
                   </div>
                 </div>
 
-                {/* Payment Modality */}
-                <div className="pt-4 border-t border-[#E2E6ED] space-y-2.5">
-                  <p className="text-xs font-semibold text-[#0F1E36]">
-                    Modalidad de pago
-                  </p>
-
-                  <label
-                    className={`block border rounded-lg p-3 cursor-pointer transition-colors ${
-                      paymentModality === 'contado'
-                        ? 'border-[#1D4ED8] bg-[#EFF6FF]/40'
-                        : 'border-[#E2E6ED] hover:border-[#CBD5E1]'
-                    }`}
-                  >
-                    <div className="flex items-start gap-2.5">
-                      <input
-                        type="radio"
-                        name="paymentModality"
-                        checked={paymentModality === 'contado'}
-                        onChange={() => setPaymentModality('contado')}
-                        className="mt-0.5 text-[#1D4ED8] focus:ring-[#1D4ED8]"
-                      />
-                      <div>
-                        <p className="text-sm font-semibold text-[#0F1E36]">
-                          Pago con tarjeta
-                        </p>
-                        <p className="text-xs text-[#64748B] mt-0.5 tabular-nums">
-                          En línea, por {formatCurrencyUSD(fees.totalAmount)}
-                        </p>
-                      </div>
-                    </div>
-                  </label>
-
-                  <label
-                    className={`block border rounded-lg p-3 cursor-pointer transition-colors ${
-                      paymentModality === 'cuotas'
-                        ? 'border-[#1D4ED8] bg-[#EFF6FF]/40'
-                        : 'border-[#E2E6ED] hover:border-[#CBD5E1]'
-                    }`}
-                  >
-                    <div className="flex items-start gap-2.5">
-                      <input
-                        type="radio"
-                        name="paymentModality"
-                        checked={paymentModality === 'cuotas'}
-                        onChange={() => setPaymentModality('cuotas')}
-                        className="mt-0.5 text-[#1D4ED8] focus:ring-[#1D4ED8]"
-                      />
-                      <div>
-                        <p className="text-sm font-semibold text-[#0F1E36]">
-                          Pago en ventanilla
-                        </p>
-                        <p className="text-xs text-[#64748B] mt-0.5 tabular-nums">
-                          Orden de {formatCurrencyUSD(fees.totalAmount)} reservada por 24 horas
-                        </p>
-                      </div>
-                    </div>
-                  </label>
-                </div>
-
-                {/* Declaration Checkbox */}
-                <div className="pt-4 border-t border-[#E2E6ED]">
-                  <label className="flex items-start gap-2.5 text-xs text-[#334155] leading-relaxed cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={acceptedDeclaration}
-                      onChange={(e) => setAcceptedDeclaration(e.target.checked)}
-                      className="mt-0.5 w-4 h-4 rounded border-[#CBD5E1] text-[#1D4ED8] focus:ring-[#1D4ED8]"
-                    />
-                    <span>
-                      Declaro haber revisado las asignaturas, horarios y
-                      condiciones del Reglamento General de Matrícula{' '}
-                      {student.period}.
-                    </span>
-                  </label>
+                {/* Datos de la solicitud (solo lectura) */}
+                <div className="pt-4 border-t border-[#E2E6ED] space-y-2 text-sm">
+                  <p className="text-xs font-semibold text-[#0F1E36]">Datos de tu solicitud</p>
+                  <dl className="space-y-1.5 text-[#475569]">
+                    <div className="flex justify-between gap-3"><dt>Método de pago</dt><dd className="text-[#0F1E36] text-right">{request.paymentMethod === 'contado' ? 'Tarjeta (en línea)' : 'Ventanilla (orden 24 h)'}</dd></div>
+                    <div className="flex justify-between gap-3"><dt>Celular</dt><dd className="font-mono text-[#0F1E36]">{request.phone}</dd></div>
+                    <div className="flex justify-between gap-3"><dt>Reglamento</dt><dd className="text-[#15803D] font-semibold">Aceptado</dd></div>
+                    {request.notes && <div><dt>Observaciones</dt><dd className="text-[#0F1E36]">{request.notes}</dd></div>}
+                  </dl>
+                  <button type="button" onClick={() => onNavigate('request')} className="text-xs font-semibold text-[#1D4ED8] hover:underline cursor-pointer">Editar solicitud</button>
                 </div>
 
                 {/* Action Buttons */}

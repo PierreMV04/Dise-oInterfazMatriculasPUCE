@@ -1,4 +1,4 @@
-﻿import { FEE_SCHEDULE, PERIOD_CONFIG } from '../data/mockAcademicData';
+import { FEE_SCHEDULE, PERIOD_CONFIG } from '../data/mockAcademicData';
 import {
   Course,
   Eligibility,
@@ -246,6 +246,8 @@ export function buildEnrollmentReceipt(
     period: student.period,
     studentCode: student.code,
     studentName: student.fullName,
+    idNumber: student.idNumber,
+    email: student.email,
     career: student.career,
     cycle: student.cycle,
     courses,
@@ -265,13 +267,15 @@ export function downloadReceiptFile(receipt: EnrollmentReceipt): void {
     '',
     `N° de Comprobante   : ${receipt.receiptCode}`,
     `Código Verificación : ${receipt.verificationHash}`,
-    `Fecha de Registro   : ${receipt.confirmedAt}`,
+    `Fecha y hora emisión: ${receipt.confirmedAt}`,
+    `Estado matrícula    : ${receipt.paymentModality === 'contado' ? 'Matriculado' : 'Pendiente de pago (orden vigente 24 horas)'}`,
     `Periodo Académico   : ${receipt.period}`,
     '',
     'DATOS DEL ESTUDIANTE',
     '--------------------------------------------------------------------',
     `Nombre Completo     : ${receipt.studentName}`,
     `Código de estudiante: ${receipt.studentCode}`,
+    ...(receipt.idNumber ? [`Cédula              : ${receipt.idNumber}`] : []),
     `Carrera Profesional : ${receipt.career}`,
     `Nivel               : ${receipt.cycle}° nivel`,
     '',
@@ -279,7 +283,7 @@ export function downloadReceiptFile(receipt: EnrollmentReceipt): void {
     '--------------------------------------------------------------------',
     ...receipt.courses.map(
       (c, idx) =>
-        `${String(idx + 1).padStart(2, '0')}. [${c.code}] ${c.name} (${c.section}) | ${c.credits} cr. | ${formatScheduleSummary(c.schedule)} | ${c.professor}`
+        `${String(idx + 1).padStart(2, '0')}. [${c.code}] ${c.name} (${c.section}) | ${c.credits} cr. | ${formatScheduleSummary(c.schedule)} | ${c.professor} | ${formatCurrencyUSD(c.price)}`
     ),
     '',
     'RESUMEN ACADÉMICO Y ECONÓMICO',

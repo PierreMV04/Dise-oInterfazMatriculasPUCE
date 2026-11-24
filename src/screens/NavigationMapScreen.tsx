@@ -2,11 +2,12 @@ import { ArrowRight, Route } from 'lucide-react';
 import { useState } from 'react';
 import {
   INTERFACE_RULES,
+  IO_MATRIX,
   MAIN_FLOW,
   NAV_CONNECTIONS,
 } from '../data/navigationMap';
 
-type Tab = 'map' | 'rules';
+type Tab = 'map' | 'rules' | 'io';
 
 export function NavigationMapScreen() {
   const [tab, setTab] = useState<Tab>('map');
@@ -42,6 +43,7 @@ export function NavigationMapScreen() {
         {([
           ['map', 'Mapa de navegación'],
           ['rules', 'Reglas de interfaz y validaciones'],
+          ['io', 'Matriz Entrada–Proceso–Salida'],
         ] as Array<[Tab, string]>).map(([id, label]) => (
           <button
             key={id}
@@ -151,6 +153,33 @@ export function NavigationMapScreen() {
                     <td className="px-3 py-3 text-[#475569]">{r.screen}</td>
                     <td className="px-3 py-3 text-[#475569]">“{r.message}”</td>
                     <td className="px-5 py-3 text-[#475569]">{r.action}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+
+      {tab === 'io' && (
+        <section className="bg-white border border-[#E2E6ED] rounded-xl overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm border-collapse">
+              <thead>
+                <tr className="text-xs text-[#64748B] border-b border-[#E2E6ED] bg-[#F8FAFC]">
+                  <th className="px-5 py-3 font-semibold">Entrada (formulario o pantalla)</th>
+                  <th className="px-3 py-3 font-semibold">Proceso del sistema que lo atiende</th>
+                  <th className="px-3 py-3 font-semibold">Salida que se genera</th>
+                  <th className="px-5 py-3 font-semibold">¿Se conecta con el Taller 13.1? ¿En qué parte?</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#E2E6ED]">
+                {IO_MATRIX.map((r) => (
+                  <tr key={r.input} className="align-top">
+                    <td className="px-5 py-3 font-semibold text-[#0F1E36]">{r.input}</td>
+                    <td className="px-3 py-3 text-[#475569]">{r.process}</td>
+                    <td className="px-3 py-3 text-[#475569]">{r.output}</td>
+                    <td className="px-5 py-3 text-[#475569]">{r.link}</td>
                   </tr>
                 ))}
               </tbody>

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Sistema de Matrícula PUCE · Diseño de interfaz (caso de uso Realizar Matrícula)
  * Basado en el portal creado por el equipo, adaptado a PUCE.
  */
@@ -21,10 +21,13 @@ import { DashboardScreen } from './screens/DashboardScreen';
 import { DesignSystemScreen } from './screens/DesignSystemScreen';
 import { EnrollmentStatusScreen } from './screens/EnrollmentStatusScreen';
 import { EnrollmentSummaryScreen } from './screens/EnrollmentSummaryScreen';
+import { RequestFormScreen } from './screens/RequestFormScreen';
+import { EnrollmentReportScreen } from './screens/EnrollmentReportScreen';
 import { LoginScreen } from './screens/LoginScreen';
 import {
   Course,
   EnrollmentReceipt,
+  EnrollmentRequest,
   PaymentModality,
   ScreenId,
   StudentProfile,
@@ -43,11 +46,13 @@ const SCREEN_PARAM: Record<string, ScreenId> = {
   login: 'login',
   menu: 'dashboard',
   seleccion: 'selection',
+  solicitud: 'request',
   resumen: 'summary',
   comprobante: 'confirmation',
   estado: 'status',
   diccionario: 'data-dictionary',
   mapa: 'navigation-map',
+  reporte: 'report',
   guia: 'design-system',
 };
 const URL_SCREEN = SCREEN_PARAM[URL_PARAMS.get('pantalla') ?? ''];
@@ -89,7 +94,19 @@ function loadPersistedState(): PersistedState | null {
 export default function App() {
   const saved = loadPersistedState();
 
-  const [catalog, setCatalog] = useState<Course[]>(INITIAL_COURSES_CATALOG);
+  // Los cupos se recalculan desde los comprobantes guardados (la matrícula de Dario ya está
+  // contada en los cupos de partida).
+  const [catalog, setCatalog] = useState<Course[]>(() => {
+    const taken = new Map<string, number>();
+    Object.entries(saved?.receiptsByStudent ?? {}).forEach(([code, receipt]) => {
+      if (code === DARIO.code) return;
+      receipt.courses.forEach((c) => taken.set(c.id, (taken.get(c.id) ?? 0) + 1));
+    });
+    return INITIAL_COURSES_CATALOG.map((c) => ({
+      ...c,
+      seatsAvailable: Math.max(0, c.seatsAvailable - (taken.get(c.id) ?? 0)),
+    }));
+  });
   const [currentStudent, setCurrentStudent] = useState<StudentProfile>(() => {
     const found = STUDENTS_DATA.find((s) => s.code === saved?.studentCode);
     return URL_STUDENT ?? found ?? DEFAULT_STUDENT;
@@ -103,6 +120,9 @@ export default function App() {
   const [selectedCourseIdsByStudent, setSelectedCourseIdsByStudent] = useState<
     Record<string, string[]>
   >(saved?.selectedCourseIdsByStudent ?? DEFAULT_SELECTION_BY_STUDENT);
+  const [requestsByStudent, setRequestsByStudent] = useState<
+    Record<string, EnrollmentRequest>
+  >({});
   const [receiptsByStudent, setReceiptsByStudent] = useState<
     Record<string, EnrollmentReceipt>
   >(saved?.receiptsByStudent ?? { [DARIO.code]: DARIO_RECEIPT });
@@ -151,9 +171,13 @@ export default function App() {
   let screen: ScreenId = currentScreen;
   if (
     !eligibility.canEnroll &&
-    (screen === 'selection' || screen === 'summary')
+    (screen === 'selection' || screen === 'request' || screen === 'summary')
   ) {
     screen = 'dashboard';
+  }
+  const activeRequest = requestsByStudent[currentStudent.code];
+  if (screen === 'summary' && !activeRequest?.submitted) {
+    screen = 'request';
   }
   if (screen === 'confirmation' && !activeReceipt) {
     screen = 'dashboard';
@@ -175,6 +199,15 @@ export default function App() {
         [currentStudent.code]: current.filter((id) => id !== courseId),
       };
     });
+  };
+
+  const handleSaveRequest = (request: EnrollmentRequest) => {
+    setRequestsByStudent((prev) => ({ ...prev, [currentStudent.code]: request }));
+  };
+
+  const handleSubmitRequest = (request: EnrollmentRequest) => {
+    handleSaveRequest(request);
+    setCurrentScreen('summary');
   };
 
   const handleClearSelection = () => {
@@ -207,6 +240,11 @@ export default function App() {
       [currentStudent.code]: receipt,
     }));
 
+    setRequestsByStudent((prev) => {
+      const next = { ...prev };
+      delete next[currentStudent.code];
+      return next;
+    });
     setCurrentScreen('confirmation');
   };
 
@@ -244,10 +282,27 @@ export default function App() {
             />
           )}
 
-          {screen === 'summary' && (
+          {screen === 'request' && (
+            <RequestFormScreen
+              student={currentStudent}
+              selectedCourses={selectedCourses}
+              request={activeRequest}
+              onSaveDraft={handleSaveRequest}
+              onSubmit={handleSubmitRequest}
+              onCancel={() => {
+                handleClearSelection();
+                handleSaveRequest({ phone: currentStudent.phone, paymentMethod: '', notes: '', acceptedRegulation: false, submitted: false });
+                setCurrentScreen('dashboard');
+              }}
+              onNavigate={setCurrentScreen}
+            />
+          )}
+
+          {screen === 'summary' && activeRequest && (
             <EnrollmentSummaryScreen
               student={currentStudent}
               selectedCourses={selectedCourses}
+              request={activeRequest}
               onConfirmEnrollment={handleConfirmEnrollment}
               onCancelEnrollment={() => {
                 handleClearSelection();
@@ -275,6 +330,15 @@ export default function App() {
 
           {screen === 'data-dictionary' && <DataDictionaryScreen />}
           {screen === 'navigation-map' && <NavigationMapScreen />}
+
+          {screen === 'report' && (
+            <EnrollmentReportScreen
+              initialCatalog={INITIAL_COURSES_CATALOG}
+              catalog={catalog}
+              receipts={Object.values(receiptsByStudent)}
+              baselineStudents={[DARIO.code]}
+            />
+          )}
 
           {screen === 'design-system' && (
             <DesignSystemScreen onNavigate={setCurrentScreen} />

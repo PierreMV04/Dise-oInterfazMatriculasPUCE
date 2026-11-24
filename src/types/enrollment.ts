@@ -1,13 +1,15 @@
-﻿export type ScreenId =
+export type ScreenId =
   | 'login'
   | 'dashboard'
   | 'selection'
+  | 'request'
   | 'summary'
   | 'confirmation'
   | 'status'
   | 'design-system'
   | 'data-dictionary'
-  | 'navigation-map';
+  | 'navigation-map'
+  | 'report';
 
 export type DayOfWeek = 'Lun' | 'Mar' | 'Mié' | 'Jue' | 'Vie' | 'Sáb';
 
@@ -56,6 +58,8 @@ export interface StudentProfile {
   email: string;
   password: string;
   fullName: string;
+  idNumber: string;      // ESTUDIANTE.cedula
+  phone: string;         // ESTUDIANTE.telefono_contacto
   career: string;
   faculty: string;
   period: string;
@@ -84,6 +88,15 @@ export interface SystemMessage {
 
 export type PaymentModality = 'contado' | 'cuotas';
 
+/** Formulario de Solicitud de Matrícula (datos que ingresa el estudiante). */
+export interface EnrollmentRequest {
+  phone: string;                      // ESTUDIANTE.telefono_contacto
+  paymentMethod: PaymentModality | ''; // MATRICULA.metodo_pago
+  notes: string;                      // MATRICULA.observaciones
+  acceptedRegulation: boolean;        // MATRICULA.acepta_reglamento
+  submitted: boolean;                 // true tras Enviar solicitud
+}
+
 export interface EnrollmentReceipt {
   receiptCode: string;
   verificationHash: string;
@@ -91,6 +104,8 @@ export interface EnrollmentReceipt {
   period: string;
   studentCode: string;
   studentName: string;
+  idNumber?: string;   // ESTUDIANTE.cedula
+  email?: string;      // ESTUDIANTE.correo_institucional
   career: string;
   cycle: number;
   courses: Course[];

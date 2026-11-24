@@ -1,10 +1,11 @@
-﻿import {
+import {
   CheckCircle2,
   Download,
   Home,
   Printer,
   SearchCheck,
 } from 'lucide-react';
+import qrcode from 'qrcode-generator';
 import { EnrollmentReceipt, ScreenId } from '../types/enrollment';
 import {
   downloadReceiptFile,
@@ -15,6 +16,15 @@ import {
 interface ConfirmationReceiptScreenProps {
   receipt: EnrollmentReceipt | null;
   onNavigate: (screen: ScreenId) => void;
+}
+
+function buildQrSvg(receipt: EnrollmentReceipt): string {
+  const qr = qrcode(0, 'M');
+  qr.addData(
+    `PUCE|${receipt.receiptCode}|${receipt.verificationHash}|${receipt.studentCode}|${receipt.period}|${receipt.totalAmount.toFixed(2)}`
+  );
+  qr.make();
+  return qr.createSvgTag({ cellSize: 3, margin: 0, scalable: true });
 }
 
 export function ConfirmationReceiptScreen({
@@ -52,6 +62,9 @@ export function ConfirmationReceiptScreen({
     );
   }
 
+  const isPaid = receipt.paymentModality === 'contado';
+  const statusLabel = isPaid ? 'Matriculado' : 'Pendiente de pago';
+
   return (
     <div className="space-y-6">
       {/* Confirmation Success Header (hidden on print) */}
@@ -60,7 +73,7 @@ export function ConfirmationReceiptScreen({
           <CheckCircle2 className="w-6 h-6 text-[#15803D] shrink-0 mt-0.5" />
           <div>
             <p className="text-xs font-semibold text-[#15803D]">
-              Paso 3 de 3 · Matrícula registrada exitosamente
+              Matrícula registrada exitosamente
             </p>
             <h1 className="text-lg sm:text-xl font-bold text-[#14532D] mt-0.5">
               Comprobante Oficial de Matrícula {receipt.period}
@@ -70,8 +83,8 @@ export function ConfirmationReceiptScreen({
               <strong className="font-mono tabular-nums">
                 {receipt.receiptCode}
               </strong>{' '}
-              confirmada el {receipt.confirmedAt}. Tus vacantes han sido
-              reservadas de forma definitiva.
+              confirmada el {receipt.confirmedAt}. Tus cupos quedaron
+              registrados.
             </p>
           </div>
         </div>
@@ -112,50 +125,25 @@ export function ConfirmationReceiptScreen({
               Constancia de Matrícula Académica
             </h2>
             <p className="text-sm text-[#475569] mt-1">
-              Periodo Académico {receipt.period} · Modalidad Regular
+              Periodo Académico {receipt.period} · Matrícula ordinaria
             </p>
           </div>
 
           <div className="flex items-center gap-4 shrink-0">
-            {/* Deterministic SVG Verification Matrix */}
-            <svg
-              width="64"
-              height="64"
-              viewBox="0 0 64 64"
-              aria-label="Sello digital de verificación"
-              className="border border-[#CBD5E1] rounded-lg p-1 bg-white shrink-0"
-            >
-              <rect x="4" y="4" width="16" height="16" fill="#0F1E36" />
-              <rect x="8" y="8" width="8" height="8" fill="#FFFFFF" />
-              <rect x="10" y="10" width="4" height="4" fill="#0F1E36" />
-
-              <rect x="44" y="4" width="16" height="16" fill="#0F1E36" />
-              <rect x="48" y="8" width="8" height="8" fill="#FFFFFF" />
-              <rect x="50" y="10" width="4" height="4" fill="#0F1E36" />
-
-              <rect x="4" y="44" width="16" height="16" fill="#0F1E36" />
-              <rect x="8" y="48" width="8" height="8" fill="#FFFFFF" />
-              <rect x="10" y="50" width="4" height="4" fill="#0F1E36" />
-
-              <rect x="26" y="6" width="4" height="8" fill="#0F1E36" />
-              <rect x="34" y="6" width="6" height="4" fill="#0F1E36" />
-              <rect x="26" y="20" width="12" height="6" fill="#0F1E36" />
-              <rect x="6" y="26" width="8" height="6" fill="#0F1E36" />
-              <rect x="20" y="30" width="8" height="8" fill="#1D4ED8" />
-              <rect x="34" y="30" width="10" height="6" fill="#0F1E36" />
-              <rect x="50" y="26" width="8" height="10" fill="#0F1E36" />
-              <rect x="26" y="44" width="8" height="6" fill="#0F1E36" />
-              <rect x="40" y="42" width="10" height="8" fill="#0F1E36" />
-              <rect x="28" y="54" width="14" height="6" fill="#0F1E36" />
-              <rect x="48" y="54" width="10" height="6" fill="#0F1E36" />
-            </svg>
+            {/* Elemento de autenticidad: QR real con código de comprobante y verificación */}
+            <div
+              role="img"
+              aria-label={`Código QR de verificación ${receipt.verificationHash}`}
+              className="w-20 h-20 border border-[#CBD5E1] rounded-lg p-1.5 bg-white shrink-0 [&_svg]:w-full [&_svg]:h-full"
+              dangerouslySetInnerHTML={{ __html: buildQrSvg(receipt) }}
+            />
 
             <div className="text-left sm:text-right">
               <p className="text-xs text-[#64748B]">N.° de Comprobante</p>
               <p className="font-mono text-sm font-bold text-[#0F1E36] tabular-nums">
                 {receipt.receiptCode}
               </p>
-              <p className="text-xs text-[#64748B] mt-1">Código verificación</p>
+              <p className="text-xs text-[#64748B] mt-1">Código de verificación</p>
               <p className="font-mono text-xs font-semibold text-[#1D4ED8] tabular-nums">
                 {receipt.verificationHash}
               </p>
@@ -163,32 +151,37 @@ export function ConfirmationReceiptScreen({
           </div>
         </header>
 
-        {/* Student Details Grid */}
+        {/* Datos del estudiante y estado */}
         <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
-          <div>
-            <p className="text-xs text-[#64748B]">Estudiante</p>
-            <p className="font-semibold text-[#0F1E36] mt-0.5">
-              {receipt.studentName}
-            </p>
-          </div>
-          <div>
-            <p className="text-xs text-[#64748B]">Código universitario</p>
-            <p className="font-mono font-semibold text-[#0F1E36] mt-0.5 tabular-nums">
-              {receipt.studentCode}
-            </p>
-          </div>
-          <div>
-            <p className="text-xs text-[#64748B]">Carrera profesional</p>
-            <p className="font-semibold text-[#0F1E36] mt-0.5">
-              {receipt.career}
-            </p>
-          </div>
-          <div>
-            <p className="text-xs text-[#64748B]">Fecha de emisión</p>
-            <p className="font-mono font-medium text-[#0F1E36] mt-0.5 tabular-nums">
-              {receipt.confirmedAt}
-            </p>
-          </div>
+          {[
+            ['Estudiante', receipt.studentName],
+            ['Código de estudiante', receipt.studentCode],
+            ['Cédula', receipt.idNumber ?? '—'],
+            ['Correo institucional', receipt.email ?? '—'],
+            ['Carrera', receipt.career],
+            ['Nivel', `${receipt.cycle}°`],
+            ['Periodo académico', receipt.period],
+            ['Fecha y hora de emisión', receipt.confirmedAt],
+          ].map(([label, value]) => (
+            <div key={label}>
+              <p className="text-xs text-[#64748B]">{label}</p>
+              <p className="font-semibold text-[#0F1E36] mt-0.5 break-words">{value}</p>
+            </div>
+          ))}
+        </section>
+
+        <section
+          className={`rounded-lg border px-4 py-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm ${
+            isPaid ? 'bg-[#E6F6EC] border-[#BBF7D0] text-[#14532D]' : 'bg-[#FFF5D9] border-[#F4D78A] text-[#6B4A06]'
+          }`}
+        >
+          <span className="text-xs font-semibold">Estado de la matrícula</span>
+          <span className="font-bold">{statusLabel}</span>
+          <span className="text-xs">
+            {isPaid
+              ? 'Pago con tarjeta aprobado. Tus cupos están asegurados.'
+              : 'Paga la orden en ventanilla dentro de 24 horas desde la emisión; si no, los cupos reservados se liberan.'}
+          </span>
         </section>
 
         {/* Enrolled Courses Table */}
@@ -207,6 +200,7 @@ export function ConfirmationReceiptScreen({
                   <th className="py-2.5 px-4 text-right font-semibold">
                     Créditos
                   </th>
+                  <th className="py-2.5 px-4 text-right font-semibold">Valor</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#E2E6ED]">
@@ -232,6 +226,9 @@ export function ConfirmationReceiptScreen({
                     <td className="py-3 px-4 text-right font-mono font-semibold text-[#0F1E36] tabular-nums">
                       {course.credits}
                     </td>
+                    <td className="py-3 px-4 text-right font-mono font-semibold text-[#0F1E36] tabular-nums">
+                      {formatCurrencyUSD(course.price)}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -242,6 +239,9 @@ export function ConfirmationReceiptScreen({
                   </td>
                   <td className="py-3 px-4 text-right font-mono text-[#1D4ED8] tabular-nums">
                     {receipt.totalCredits}
+                  </td>
+                  <td className="py-3 px-4 text-right font-mono text-[#1D4ED8] tabular-nums">
+                    {formatCurrencyUSD(receipt.creditCostTotal)}
                   </td>
                 </tr>
               </tfoot>
@@ -274,7 +274,7 @@ export function ConfirmationReceiptScreen({
               Secretaría General y Registros Académicos
             </p>
             <p>
-              Constancia válida con código digital{' '}
+              Para verificar este documento escanea el QR o usa el código{' '}
               <span className="font-mono text-[#0F1E36]">
                 {receipt.verificationHash}
               </span>

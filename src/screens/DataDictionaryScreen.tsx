@@ -1,4 +1,4 @@
-﻿import { Database, Search } from 'lucide-react';
+import { Database, Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import {
   DATA_DICTIONARY,
@@ -30,7 +30,7 @@ export function DataDictionaryScreen() {
     if (p === 'matriz') return 'matrix';
     return 'entities';
   });
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState(() => new URLSearchParams(window.location.search).get('buscar') ?? '');
 
   const q = query.trim().toLowerCase();
 

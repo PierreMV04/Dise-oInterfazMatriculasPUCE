@@ -42,6 +42,8 @@ export const STUDENTS_DATA: StudentProfile[] = [
     email: 'aandino@puce.edu.ec',
     password: 'puce2026',
     fullName: 'Alex Andino',
+    idNumber: '1712345601',
+    phone: '0991234501',
     financialClearance: true,
     debtAmount: 0,
     history: [
@@ -55,6 +57,8 @@ export const STUDENTS_DATA: StudentProfile[] = [
     email: 'dfranco@puce.edu.ec',
     password: 'puce2026',
     fullName: 'Dario Franco',
+    idNumber: '1712345602',
+    phone: '0991234502',
     financialClearance: true,
     debtAmount: 0,
     history: [
@@ -68,6 +72,8 @@ export const STUDENTS_DATA: StudentProfile[] = [
     email: 'pmontenegro@puce.edu.ec',
     password: 'puce2026',
     fullName: 'Pierre Montenegro',
+    idNumber: '1712345603',
+    phone: '0991234503',
     financialClearance: false,
     debtAmount: 85.5,
     history: [

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Diccionario de Datos y especificación de procesos del caso de uso
  * "Realizar Matrícula". Es la misma información del archivo
  * docs/Diccionario_Datos_y_Procesos.txt, estructurada para mostrarla en el sistema.
@@ -38,6 +38,7 @@ export const DATA_DICTIONARY: DDEntity[] = [
       f('nombres', 'texto', 'máx. 60', true, 'Nombres del estudiante.'),
       f('apellidos', 'texto', 'máx. 60', true, 'Apellidos del estudiante.'),
       f('correo_institucional', 'texto', 'máx. 80, formato correo', true, 'Usuario de acceso al sistema.'),
+      f('telefono_contacto', 'texto', '10 dígitos (09XXXXXXXX)', true, 'Celular del estudiante; se confirma en la Solicitud de matrícula.'),
       f('clave_cifrada', 'texto', 'hash', true, 'Nunca se muestra en pantalla.'),
       f('codigo_carrera', 'texto', '6', true, 'Carrera del estudiante.', 'FK'),
       f('nivel_actual', 'entero', '1 a 10', true, 'Nivel de la malla (ej. 6).'),
@@ -142,13 +143,16 @@ export const DATA_DICTIONARY: DDEntity[] = [
       f('valor_materias', 'decimal', '8,2 USD', true, 'Suma de valores del detalle.'),
       f('derechos_matricula', 'decimal', '6,2 USD', true, 'Se copia desde PERIODO.'),
       f('valor_total', 'decimal', '8,2 USD', true, 'valor_materias + derechos_matricula.'),
-      f('acepta_reglamento', 'lógico', 'Sí / No', true, 'Debe ser Sí para confirmar.'),
+      f('acepta_reglamento', 'lógico', 'Sí / No', true, 'Debe ser Sí para enviar la solicitud (MSG-013).'),
+      f('metodo_pago', 'texto', 'Tarjeta / Ventanilla', true, 'Elegido en la Solicitud; se copia a ORDEN_PAGO.metodo_pago.'),
+      f('observaciones', 'texto', 'máx. 200', false, 'Comentario opcional del estudiante.'),
+      f('codigo_verificacion', 'texto', 'VER-PUCE-NNNN-NNNN', true, 'Código que acompaña al QR del comprobante; permite verificar su autenticidad.'),
       f('estado_matricula', 'texto', 'Borrador / Pendiente de pago / Matriculado / Anulada', true, 'Ciclo de vida de la matrícula.'),
     ],
   },
   {
     name: 'DETALLE_MATRICULA',
-    description: 'Grupos incluidos en una matrícula.',
+    description: 'Grupos incluidos en una matrícula. Se crea solo al confirmar (P6); antes la selección vive en SESION.seleccion_guardada.',
     fields: [
       f('numero_matricula', 'texto', 'MAT-AAAA-NNNNN', true, 'Matrícula.', 'FK'),
       f('codigo_grupo', 'texto', 'máx. 12', true, 'Grupo elegido. Una asignatura por matrícula.', 'FK'),
@@ -199,7 +203,7 @@ export const DATA_DICTIONARY: DDEntity[] = [
       f('codigo_estudiante', 'texto', 'L + 8 dígitos', true, 'Estudiante.', 'FK'),
       f('hora_inicio_sesion', 'fecha-hora', 'AAAA-MM-DD HH:MM', true, 'Momento de ingreso.'),
       f('ultima_actividad', 'fecha-hora', 'AAAA-MM-DD HH:MM', true, 'Si pasan 15 min sin actividad expira.'),
-      f('seleccion_guardada', 'texto', 'lista de codigo_grupo', false, 'Se restaura al volver a ingresar.'),
+      f('seleccion_guardada', 'texto', 'lista de codigo_grupo', false, 'Selección temporal: se guarda al presionar Continuar y al expirar la sesión; no escribe en MATRICULA. Se restaura al volver a ingresar.'),
     ],
   },
   {
@@ -236,6 +240,9 @@ export const SYSTEM_MESSAGES: DDMessage[] = [
   { code: 'MSG-013', type: 'Error', text: 'Debes aceptar el Reglamento de Matrícula para continuar.' },
   { code: 'MSG-014', type: 'Error', text: 'Pago rechazado: {motivo}.' },
   { code: 'MSG-015', type: 'Advertencia', text: 'Tu sesión expiró por inactividad. Tu selección se guardó.', rule: 'E6' },
+  { code: 'MSG-017', type: 'Error', text: 'Ingresa un celular de 10 dígitos que empiece con 09.' },
+  { code: 'MSG-018', type: 'Error', text: 'Selecciona un método de pago para continuar.' },
+  { code: 'MSG-019', type: 'Error', text: 'Las observaciones no pueden superar 200 caracteres.' },
   { code: 'MSG-016', type: 'Éxito', text: 'Matrícula exitosa. Comprobante {numero_matricula}.' },
 ];
 
@@ -252,14 +259,15 @@ export const PROCESSES: DDProcess[] = [
   { id: 'P1', name: 'Autenticar acceso', screens: '01, 02', inputs: 'correo_institucional o código, clave', outputs: 'Sesión iniciada; o MSG-001', logic: 'Si coinciden con ESTUDIANTE, crea la SESION y va al menú principal. Si no, muestra el error y no avanza.' },
   { id: 'P2', name: 'Verificar habilitación', screens: '03, 04, 05', inputs: 'codigo_estudiante, fecha del sistema', outputs: 'Estado de habilitación; MSG-002 o MSG-003', logic: 'Si estado_financiero = Con deuda, bloquea (A2). Si la fecha está fuera de 2026-02-02 a 2026-02-13, bloquea (A1). Si no, habilita Realizar matrícula.' },
   { id: 'P3', name: 'Consultar oferta académica', screens: '06', inputs: 'texto de búsqueda, filtros', outputs: 'ASIGNATURA y GRUPO con cupo, horario y estado', logic: 'Solo asignaturas de la carrera y nivel del estudiante; calcula el estado de cada una con el historial y la selección.' },
-  { id: 'P4', name: 'Verificar prerrequisitos y cupos', screens: '06, 07 a 11', inputs: 'grupos seleccionados', outputs: 'Resultado de validación; MSG-004 a MSG-011', logic: 'Reglas: cupo > 0 (E1); prerrequisitos aprobados (E2); correquisitos seleccionados; créditos ≤ 20 (E4); sin cruce de horario (E3); al menos una asignatura.' },
+  { id: 'P4', name: 'Verificar prerrequisitos y cupos', screens: '06, 07 a 11', inputs: 'grupos seleccionados', outputs: 'Resultado de validación; MSG-004 a MSG-011', logic: 'Solo lee y valida; no escribe en MATRICULA. Reglas: cupo > 0 (E1); prerrequisitos aprobados (E2); correquisitos seleccionados; créditos ≤ 20 (E4); sin cruce de horario (E3); al menos una asignatura.' },
   { id: 'P5', name: 'Gestionar lista de espera', screens: '10', inputs: 'codigo_estudiante, codigo_grupo', outputs: 'Posición en la lista', logic: 'Agrega al estudiante a LISTA_ESPERA con la fecha de solicitud; no suma créditos ni valor.' },
-  { id: 'P6', name: 'Registrar matrícula', screens: '12, 13', inputs: 'selección validada, acepta_reglamento', outputs: 'MATRICULA en estado Pendiente de pago; MSG-012 o MSG-013', logic: 'Exige el reglamento aceptado, revalida todo, descuenta cupos y crea MATRICULA y DETALLE. Si un cupo se agotó (E5), no cobra y regresa a Selección.' },
+  { id: 'P6', name: 'Registrar matrícula', screens: '12, 13', inputs: 'selección validada, acepta_reglamento', outputs: 'MATRICULA en estado Pendiente de pago; MSG-012 o MSG-013', logic: 'Es el único proceso que escribe en MATRICULA y DETALLE_MATRICULA (Continuar y Enviar solicitud solo guardan datos temporales en SESION). Exige el reglamento aceptado, revalida todo y descuenta cupos. Si un cupo se agotó (E5), no cobra y regresa a Selección.' },
   { id: 'P7', name: 'Generar orden de pago', screens: '14', inputs: 'MATRICULA.valor_total', outputs: 'ORDEN_PAGO con vencimiento a 24 horas', logic: 'Reserva los cupos 24 horas. Si la orden vence sin pago, la matrícula pasa a Anulada y se devuelven los cupos.' },
   { id: 'P8', name: 'Procesar pago', screens: '14, 15', inputs: 'metodo_pago, datos de tarjeta (solo van a la pasarela)', outputs: 'PAGO Aprobado o Rechazado; MSG-014', logic: 'Tarjeta aprobada: genera el comprobante. Rechazada: pantalla 15 y vuelve a 14. Ventanilla: la orden queda Vigente.' },
   { id: 'P9', name: 'Generar comprobante', screens: '16', inputs: 'MATRICULA, PAGO aprobado', outputs: 'estado_matricula = Matriculado; comprobante MAT-2026-09823; MSG-016', logic: 'Solo con pago aprobado u orden de ventanilla emitida.' },
   { id: 'P10', name: 'Consultar estado de matrícula', screens: '18', inputs: 'codigo_estudiante, codigo_periodo', outputs: 'Estado, materias, estado de la orden y del pago', logic: 'Solo lectura. Desde aquí el estudiante vuelve al menú o descarga el comprobante.' },
   { id: 'P11', name: 'Gestionar sesión', screens: '17', inputs: 'ultima_actividad', outputs: 'Cierre de sesión; seleccion_guardada', logic: 'A los 15 minutos sin actividad (E6) en 06, 12 o 14, guarda la selección, cierra la sesión y muestra la pantalla 17. Al volver a ingresar la restaura.' },
+  { id: 'P12', name: 'Generar reporte de matriculados', screens: 'Reporte (Secretaría)', inputs: 'codigo_periodo, codigo_carrera, codigo_asignatura (filtros)', outputs: 'Listado por asignatura con totales y cupos ocupados', logic: 'Solo lectura. Une MATRICULA, DETALLE_MATRICULA, ESTUDIANTE, GRUPO y ASIGNATURA del periodo; agrupa por asignatura; calcula matriculados, cupo_total, ocupados y disponibles (cupo_total - cupo_disponible). Un grupo sin cupo se marca. Cada fila coincide con un DETALLE_MATRICULA.' },
 ];
 
 export const SCREEN_MATRIX: Array<{ screen: string; processes: string; entities: string }> = [
@@ -268,17 +276,19 @@ export const SCREEN_MATRIX: Array<{ screen: string; processes: string; entities:
   { screen: '03 Panel del estudiante', processes: 'P2', entities: 'ESTUDIANTE, PERIODO' },
   { screen: '04 Bloqueo financiero (A2)', processes: 'P2', entities: 'ESTUDIANTE (estado_financiero)' },
   { screen: '05 Periodo cerrado (A1)', processes: 'P2', entities: 'PERIODO' },
-  { screen: '06 Oferta de materias', processes: 'P3, P4', entities: 'ASIGNATURA, GRUPO, HORARIO_GRUPO, REQUISITO_ASIGNATURA, DETALLE_MATRICULA' },
+  { screen: '06 Oferta de materias', processes: 'P3, P4', entities: 'ASIGNATURA, GRUPO, HORARIO_GRUPO, REQUISITO_ASIGNATURA, SESION (seleccion_guardada)' },
   { screen: '07 Prerrequisito (E2)', processes: 'P4', entities: 'HISTORIAL_ACADEMICO, REQUISITO_ASIGNATURA' },
   { screen: '08 Correquisito pendiente', processes: 'P4', entities: 'REQUISITO_ASIGNATURA' },
   { screen: '09 Excede créditos (E4)', processes: 'P4', entities: 'PERIODO (creditos_maximos)' },
   { screen: '10 Sin cupo / espera (E1)', processes: 'P4, P5', entities: 'GRUPO, LISTA_ESPERA' },
   { screen: '11 Cruce de horario (E3)', processes: 'P4', entities: 'GRUPO, HORARIO_GRUPO' },
+  { screen: 'Solicitud de matrícula (formulario)', processes: 'P4', entities: 'ESTUDIANTE, PERIODO, GRUPO, SESION (seleccion_guardada)' },
   { screen: '12 Resumen de matrícula', processes: 'P6', entities: 'MATRICULA, DETALLE_MATRICULA' },
   { screen: '13 Cupo agotado (E5)', processes: 'P6', entities: 'GRUPO' },
   { screen: '14 Pago de matrícula', processes: 'P7, P8', entities: 'ORDEN_PAGO, PAGO' },
   { screen: '15 Pago rechazado', processes: 'P8', entities: 'PAGO' },
   { screen: '16 Matrícula exitosa', processes: 'P9', entities: 'MATRICULA' },
   { screen: '17 Sesión expirada (E6)', processes: 'P11', entities: 'SESION' },
+  { screen: 'Reporte de matriculados (Secretaría)', processes: 'P12', entities: 'MATRICULA, DETALLE_MATRICULA, ESTUDIANTE, GRUPO, ASIGNATURA, PERIODO, CARRERA' },
   { screen: '18 Consulta de estado', processes: 'P10', entities: 'MATRICULA, ORDEN_PAGO, PAGO' },
 ];

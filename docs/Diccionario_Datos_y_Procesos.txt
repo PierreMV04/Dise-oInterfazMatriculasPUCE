@@ -16,6 +16,7 @@ ENTIDAD 1: ESTUDIANTE
   nombres                | texto   | max 60                      | Si | Nombres del estudiante.
   apellidos              | texto   | max 60                      | Si | Apellidos del estudiante.
   correo_institucional   | texto   | max 80, formato correo      | Si | Usuario de acceso al sistema.
+  telefono_contacto      | texto   | 10 digitos (09XXXXXXXX)     | Si | Celular del estudiante; se confirma en la Solicitud de matricula.
   clave_cifrada          | texto   | hash                        | Si | Nunca se muestra en pantalla.
   codigo_carrera         | texto   | 6                           | Si | FK a CARRERA.
   nivel_actual           | entero  | 1 a 10                      | Si | Nivel de la malla (ej. 6).
@@ -81,10 +82,13 @@ ENTIDAD 9: MATRICULA
   valor_materias         | decimal | 8,2 en USD                  | Si | Suma de valores del detalle.
   derechos_matricula     | decimal | 6,2 en USD                  | Si | Se copia desde PERIODO.
   valor_total            | decimal | 8,2 en USD                  | Si | valor_materias + derechos_matricula.
-  acepta_reglamento      | logico  | Si / No                     | Si | Debe ser Si para confirmar.
+  acepta_reglamento      | logico  | Si / No                     | Si | Debe ser Si para enviar la solicitud (MSG-013).
+  metodo_pago            | texto   | Tarjeta / Ventanilla        | Si | Elegido en la Solicitud; se copia a ORDEN_PAGO.metodo_pago.
+  observaciones          | texto   | max 200                     | No | Comentario opcional del estudiante.
+  codigo_verificacion    | texto   | VER-PUCE-NNNN-NNNN          | Si | Codigo que acompana al QR del comprobante; permite verificar su autenticidad.
   estado_matricula       | texto   | Borrador / Pendiente de pago / Matriculado / Anulada | Si | Ciclo de vida de la matricula.
 
-ENTIDAD 10: DETALLE_MATRICULA
+ENTIDAD 10: DETALLE_MATRICULA  (se crea solo al confirmar, P6; antes la seleccion vive en SESION.seleccion_guardada)
   numero_matricula       | texto   | MAT-AAAA-NNNNN              | Si | FK a MATRICULA.
   codigo_grupo           | texto   | max 12                      | Si | FK a GRUPO. Una asignatura por matricula.
   creditos               | entero  | 1 a 5                       | Si | Copia de ASIGNATURA.creditos.
@@ -118,7 +122,7 @@ ENTIDAD 14: SESION
   codigo_estudiante      | texto   | L + 8 digitos               | Si | FK.
   hora_inicio_sesion     | fecha-hora | AAAA-MM-DD HH:MM         | Si | Momento de ingreso.
   ultima_actividad       | fecha-hora | AAAA-MM-DD HH:MM         | Si | Si pasan 15 min sin actividad expira (E6).
-  seleccion_guardada     | texto   | lista de codigo_grupo       | No | Se restaura al volver a ingresar.
+  seleccion_guardada     | texto   | lista de codigo_grupo       | No | Seleccion temporal: se guarda al presionar Continuar y al expirar la sesion; NO escribe en MATRICULA. Se restaura al volver a ingresar.
 
 ENTIDAD 15: MENSAJE_SISTEMA
   codigo_mensaje         | texto   | "MSG-" + 3 digitos          | Si | PK.
@@ -149,6 +153,9 @@ CATALOGO DE MENSAJES (MENSAJE_SISTEMA)
   MSG-014 Error        "Pago rechazado: {motivo}."
   MSG-015 Advertencia  "Tu sesion expiro por inactividad. Tu seleccion se guardo."   (E6)
   MSG-016 Exito        "Matricula exitosa. Comprobante {numero_matricula}."
+  MSG-017 Error        "Ingresa un celular de 10 digitos que empiece con 09."
+  MSG-018 Error        "Selecciona un metodo de pago para continuar."
+  MSG-019 Error        "Las observaciones no pueden superar 200 caracteres."
 
 ALMACENES DE DATOS DEL DFD
   D1 Estudiantes (ESTUDIANTE, CARRERA)         D2 Periodos (PERIODO)
@@ -192,7 +199,7 @@ P3  CONSULTAR OFERTA ACADEMICA           Pantallas: 06
 
 P4  VERIFICAR PREREQUISITOS Y CUPOS (validar la seleccion)                         Pantallas: 06, 07, 08, 09, 10, 11
   Entradas : lista de codigo_grupo seleccionados. Lee: D3, D4, D2.
-  Salidas  : resultado de validacion; MSG-004 a MSG-011.
+  Salidas  : resultado de validacion; MSG-004 a MSG-011. Solo lee y valida; no escribe en MATRICULA.
   Reglas   : R1 cupo_disponible > 0                       (E1 -> pantalla 10)
              R2 prerrequisitos con estado "Aprobada"       (E2 -> pantalla 07)
              R3 correquisitos tambien seleccionados        (-> pantalla 08)
@@ -211,6 +218,8 @@ P5  GESTIONAR LISTA DE ESPERA                 Pantallas: 10
 
 P6  REGISTRAR MATRICULA                       Pantallas: 12, 13
   Entradas : seleccion validada, acepta_reglamento. Lee/Escribe: D3, D5.
+  Nota     : es el UNICO proceso que escribe en MATRICULA y DETALLE_MATRICULA.
+             Continuar (06) y Enviar solicitud solo guardan datos temporales en SESION.
   Salidas  : MATRICULA en estado "Pendiente de pago"; MSG-012 o MSG-013.
   Logica   : 1) Si acepta_reglamento = No -> MSG-013, no avanza.
              2) Revalida cupo, requisitos, creditos y horarios (P4).
@@ -255,6 +264,13 @@ P11 GESTIONAR SESION                          Pantallas: 17 (Sesion expirada)
              -> guardar la seleccion, cerrar sesion y mostrar pantalla 17.
              Al volver a iniciar sesion se restaura la seleccion.
 
+P12 GENERAR REPORTE DE MATRICULADOS           Pantalla: Reporte (Secretaria Academica)
+  Entradas : codigo_periodo, codigo_carrera, codigo_asignatura (filtros). Lee: D5, D1, D3, D4.
+  Salidas  : listado agrupado por asignatura con totales y cupos ocupados.
+  Logica   : Solo lectura. Une MATRICULA, DETALLE_MATRICULA, ESTUDIANTE, GRUPO y ASIGNATURA
+             del periodo, agrupa por asignatura y calcula matriculados, cupo_total,
+             ocupados y disponibles (cupo_total - cupo_disponible).
+
 
 PARTE 3. MATRIZ PANTALLA - PROCESO - DATOS
 ---------------------------------------------------------------------
@@ -264,7 +280,7 @@ Pantalla                         Procesos      Entidades principales
 03 Panel del estudiante          P2            ESTUDIANTE, PERIODO
 04 Bloqueo financiero (A2)       P2            ESTUDIANTE (estado_financiero)
 05 Periodo cerrado (A1)          P2            PERIODO
-06 Oferta de materias            P3, P4        ASIGNATURA, GRUPO, REQUISITO_ASIGNATURA, DETALLE_MATRICULA
+06 Oferta de materias            P3, P4        ASIGNATURA, GRUPO, REQUISITO_ASIGNATURA, SESION
 07 Prerrequisito (E2)            P4            HISTORIAL_ACADEMICO, REQUISITO_ASIGNATURA
 08 Correquisito pendiente        P4            REQUISITO_ASIGNATURA
 09 Excede creditos (E4)          P4            PERIODO (creditos_maximos)
@@ -277,3 +293,4 @@ Pantalla                         Procesos      Entidades principales
 16 Matricula exitosa             P9            MATRICULA
 17 Sesion expirada (E6)          P11           SESION
 18 Consulta de estado (nueva)    P10           MATRICULA, ORDEN_PAGO, PAGO
+Reporte de matriculados          P12           MATRICULA, DETALLE_MATRICULA, ESTUDIANTE, GRUPO, ASIGNATURA, PERIODO, CARRERA

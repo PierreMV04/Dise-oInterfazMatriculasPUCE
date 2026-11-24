@@ -1,4 +1,4 @@
-﻿import { Database, Menu, Palette, Route, X } from 'lucide-react';
+import { Database, Menu, Palette, Route, X } from 'lucide-react';
 import { useState } from 'react';
 import { ScreenId } from '../types/enrollment';
 
@@ -10,6 +10,7 @@ interface TopNavBarProps {
 const PORTAL_NAV_ITEMS: Array<{ id: ScreenId; label: string }> = [
   { id: 'dashboard', label: 'Menú principal' },
   { id: 'selection', label: 'Selección de asignaturas' },
+  { id: 'request', label: 'Solicitud' },
   { id: 'summary', label: 'Resumen' },
   { id: 'confirmation', label: 'Comprobante' },
   { id: 'status', label: 'Estado de matrícula' },
@@ -19,9 +20,11 @@ const UI_SCREEN_SELECTOR: Array<{ id: ScreenId; code: string; label: string }> =
   { id: 'login', code: '01', label: 'Inicio de sesión' },
   { id: 'dashboard', code: '02', label: 'Menú del estudiante' },
   { id: 'selection', code: '03', label: 'Selección de asignaturas' },
-  { id: 'summary', code: '04', label: 'Resumen de matrícula' },
-  { id: 'confirmation', code: '05', label: 'Confirmación y comprobante' },
-  { id: 'status', code: '06', label: 'Consulta de estado' },
+  { id: 'request', code: '04', label: 'Solicitud de matrícula' },
+  { id: 'summary', code: '05', label: 'Resumen de matrícula' },
+  { id: 'confirmation', code: '06', label: 'Confirmación y comprobante' },
+  { id: 'status', code: '07', label: 'Consulta de estado' },
+  { id: 'report', code: '08', label: 'Reporte de matriculados' },
 ];
 
 export function TopNavBar({ currentScreen, onNavigate }: TopNavBarProps) {

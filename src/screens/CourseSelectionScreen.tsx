@@ -301,7 +301,7 @@ export function CourseSelectionScreen({
       });
       return;
     }
-    onNavigate('summary');
+    onNavigate('request');
   };
 
   const handleConfirmCancel = (discardChanges: boolean) => {
